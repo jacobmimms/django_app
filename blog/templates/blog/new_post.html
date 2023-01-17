@@ -1,0 +1,22 @@
+{% extends "blog/base.html" %}
+{% load static tailwind_tags %}
+{% load crispy_forms_tags %}
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+    <title>Home</title>
+		{% tailwind_css %}
+	</head>
+<body class="bg-gray-50 font-serif leading-normal tracking-normal">
+{% block content %}
+<form method="POST" action="{% url 'blog:new_post' %}">
+    {% csrf_token %}
+    {{form | crispy }}                    
+    <button class="btn btn-primary" type="submit">Post</button>
+</form>
+{% endblock %}
+
+</body>
+
+</html>

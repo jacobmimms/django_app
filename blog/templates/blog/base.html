@@ -1,0 +1,29 @@
+{% load static tailwind_tags %}
+<!DOCTYPE html>
+<html lang="en" class="font-sans w-full max-w-full h-max bg-secondary">
+	<head>
+    <title>BrosCode</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		{% tailwind_css %}
+	</head>
+
+	<body class="w-full max-w-full flex flex-col justify-left align-middle">
+        <div id="header">
+            {% block header %}
+            {% include "blog/header.html" %}
+            {% endblock %}
+        </div>
+        
+        <div id="main_content h-max" class="h-full">
+            {% block content %}{% endblock %}       
+        </div>
+        
+        <div id="footer">
+            {% block footer %}
+            {% include "blog/footer.html" %}
+            {% endblock %}
+        </div>
+	</body>
+</html>

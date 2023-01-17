@@ -1,0 +1,46 @@
+{% extends "blog/base.html" %}
+{% load static tailwind_tags %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>BrosCode Main Page</title>
+    {% tailwind_css %}
+</head>
+<body class="">
+    {% block content %}
+    <a class="flex justify-center bg-accent-dark hover:bg-accent-darkest text-accent-lightest font-bold py-2 px-4 rounded" href="{% url 'blog:new_post'%}">New Post?</a>
+    <div id="postList" class="flex flex-col w-full align-middle items-center justify-center">
+    {% if latest_posts_list %}
+        <ul class="flex flex-col w-10/12 align-middle items-center justify-center">
+        {% for post in latest_posts_list %} 
+        <div class="w-full rounded-lg h-full">
+            
+            <li class="flex my-2 items-center bg-primary text-accent-lightest w-full h-full rounded-lg">
+                <form class="w-8" action="{% url 'blog:post_vote' post.id %}"  method="post">
+                    {% csrf_token %}
+                    <button class="pl-2" name="vote" value="up">↑</button>
+                    <button class="pl-2" name="vote" value="down">↓</button>
+                </form>
+                <div class="flex justify-start ">
+                    <div class="flex pl-2 pr-3 w-10 h-full"> 
+                        {{post.votes}}
+                    </div>
+                    <a href="{% url 'blog:post' post.id %}" class="flex">
+                        {{ post.title | upper }}
+                    </a>
+                </div>
+            </li>
+        </div>
+        {% endfor %}
+        </ul>
+    </div>
+    {% else %}
+        <p> No posts are available</p>
+    {% endif %}
+{% endblock %}
+</body>
+</html>
+
+
+
