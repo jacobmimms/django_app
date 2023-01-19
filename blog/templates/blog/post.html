@@ -11,13 +11,14 @@
     {% tailwind_css %}
 </head>
 
-<body class="bg-gray-50 font-serif leading-normal tracking-normal">
+<body class="font-serif leading-normal tracking-normal">
     {% block content %}
     <h1> {{post.title}} </h1>
     <h2> {{post.created_at}} </h2>
     <p> {{post.content}} </p>
     <p> {{post.votes}} </p>
-    {% if comments %}
+
+
     <section class="bg-white dark:bg-gray-900 py-8 lg:py-16">
         <div class="max-w-2xl mx-auto px-4">
             <div class="flex justify-between items-center mb-6">
@@ -99,9 +100,7 @@
             {% endfor %}
         </div>
       </section>
-    {% else %}
     <p>There are no comments</p>
-    {% endif %}
     {% endblock %}
 
 

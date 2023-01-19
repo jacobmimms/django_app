@@ -1,32 +1,95 @@
 {% extends "blog/base.html" %}
 {% load static tailwind_tags %}
-
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>BrosCode Main Page</title>
+    <title>BrosCode Main Page</title>
+    <script type="text/javascript" src="{% static 'blog/app.js' %}"></script>  
     {% tailwind_css %}
 </head>
-<body class="">
+<body >
     {% block content %}
-    <a class="flex justify-center bg-accent-dark hover:bg-accent-darkest text-accent-lightest font-bold py-2 px-4 rounded" href="{% url 'blog:new_post'%}">New Post?</a>
+    <a class="flex bg-slate-300 justify-center bg-accent-dark hover:bg-slate-400 text-accent-lighter font-bold py-2 px-4 rounded" href="{% url 'blog:new_post'%}">New Post?</a>
     <div id="postList" class="flex flex-col w-full align-middle items-center justify-center">
+    <script>
+        const active_up = '▲'
+        const active_down = '▼'
+        const inactive_up = '△'
+        const inactive_down = '▽'
+        let ajax_call = function (endpoint, request_parameters) {
+            $.get(endpoint, request_parameters)
+                .done(response => {
+                    console.log(response)
+                    if (response == false) {
+                        return
+                    }
+                    if (response.flip) {
+                        // replace active with inactive for both buttons
+                        $(`#upvote${response.id}`).html(inactive_up)
+                        $(`#downvote${response.id}`).html(inactive_down)
+                        // replace inactive with active for the button that was clicked
+                        if (response.upvote) {
+                            $(`#upvote${response.id}`).html(active_up)
+                        }
+                        else {
+                            $(`#downvote${response.id}`).html(active_down)
+                        }
+                    }
+                    else {
+                        if (response.upvote) {
+                            if (response.was_active) {
+                                $(`#upvote${response.id}`).html(inactive_up)
+                            } else {
+                                $(`#upvote${response.id}`).html(active_up)
+                            }
+                        }
+                        else {
+                            if (response.was_active) {
+                                $(`#downvote${response.id}`).html(inactive_down)
+                            } else {
+                                $(`#downvote${response.id}`).html(active_down)
+                            }
+                        }
+                    }
+                    $(`#votes${response.id}`).html(response.votes)
+                })
+        }
+        let vote = (endpoint, post_id) => {
+            ajax_call(endpoint, {
+                post_id: post_id,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            })
+        }
+    </script>
     {% if latest_posts_list %}
         <ul class="flex flex-col w-10/12 align-middle items-center justify-center">
         {% for post in latest_posts_list %} 
         <div class="w-full rounded-lg h-full">
-            
-            <li class="flex my-2 items-center bg-primary text-accent-lightest w-full h-full rounded-lg">
-                <form class="w-8" action="{% url 'blog:post_vote' post.id %}"  method="post">
-                    {% csrf_token %}
-                    <button class="pl-2" name="vote" value="up">↑</button>
-                    <button class="pl-2" name="vote" value="down">↓</button>
-                </form>
-                <div class="flex justify-start ">
-                    <div class="flex pl-2 pr-3 w-10 h-full"> 
+            <li class="flex my-2 items-center bg-primary text-accent-darkest w-full h-full rounded-lg">
+                <!-- <form class="h-min w-8" id="vote" onc> -->
+                <div class="h-min w-8">
+                    <button class="p-1 rounded-tr-xl bg-slate-300 hover:bg-slate-400 active:bg-slate-500" id="upvote{{post.id}}" onclick=vote('upvote',{{post.id}})>
+                        {% if user in post.users_upvoted_post.all %}
+                            ▲
+                        {% else %}
+                            △
+                        {% endif %}
+                    </button>
+                    <button class="p-1 rounded-bl-xl bg-slate-300 hover:bg-slate-400 active:bg-slate-500" id="downvote{{post.id}}" onclick=vote('downvote',{{post.id}})>
+                        {% if user in post.users_downvoted_post.all %}
+                            ▼
+                        {% else %}
+                            ▽
+                        {% endif %}
+                    </button>
+                </div>
+                <!-- </form> -->
+                <div class="flex align-middle">
+                    <div class="flex flex-col ml-4 w-4 justify-center " id="votes{{post.id}}"> 
                         {{post.votes}}
                     </div>
-                    <a href="{% url 'blog:post' post.id %}" class="flex">
+                    <a href="{% url 'blog:post' post.id %}" class=" hover:bg-slate-300 rounded-full m-2 p-2">
                         {{ post.title | upper }}
                     </a>
                 </div>
@@ -41,6 +104,3 @@
 {% endblock %}
 </body>
 </html>
-
-
-
