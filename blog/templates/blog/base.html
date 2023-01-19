@@ -1,6 +1,6 @@
 {% load static tailwind_tags %}
 <!DOCTYPE html>
-<html lang="en" class="font-sans w-full max-w-full h-max bg-secondary">
+<html lang="en" class="font-sans w-full max-w-full h-max text-slate-700">
 	<head>
     <title>BrosCode</title>
 		<meta charset="UTF-8">
@@ -10,6 +10,7 @@
 	</head>
 
 	<body class="w-full max-w-full flex flex-col justify-left align-middle">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> 
         <div id="header">
             {% block header %}
             {% include "blog/header.html" %}

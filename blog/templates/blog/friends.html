@@ -1,0 +1,68 @@
+{% extends "blog/base.html" %}
+{% load static tailwind_tags %}
+<head>
+<title>Home</title>
+    {% tailwind_css %}
+</head>
+<body class="flex flex-col justify-center items-center">
+    {% block content %}
+    Search For Friends with Email:
+    <div class="p-2 flex items-center justify-center">
+        <div class="h-8 flex flex-row m-2f bg-slate-300 rounded-2xl w-9/12 justify-between">  
+            <div id="hider" class="align-middle w-2/12 h-12">
+                <div id="search-icon" role="status" class="hidden flex-col justify-center">
+                    <svg aria-hidden="true" class="h-8 w-8 text-white fill-slate-800 animate-spin" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+                        <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentFill"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="h-10/12 flex rounded-2xl w-11/12 shadow-md fill-slate-800">
+                <input type="search" id="search" name="search" class="text-slate-700 w-10/12 border-0 rounded-l-2xl focus:ring-0 "> 
+                <svg class="hover:cursor-pointer w-2/12 p-1 bg-slate-400 rounded-r-2xl " focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg>
+            </div>
+        </div>
+    </div>
+    <script>
+        let scheduled_function = false
+        const delay_by_in_ms = 700
+        const artists_div = $('#replaceable-content')
+        let ajax_call = function (endpoint, request_parameters) {
+            $.get(endpoint, request_parameters)
+                .done(response => {
+                    console.log(response)
+                    if (response == false) {
+                        console.log("fail")
+                        $("#results").html("Sorry, no friends could be found")
+                        $("#search-icon").addClass('hidden')
+                        return
+                    }
+                    console.log(response)
+                    $("#results").html(response)
+                    $("#search-icon").addClass('hidden')
+                })
+        }
+        $("#search").on("keyup",(function (e) {
+            e.preventDefault();
+            var email = {"email":$("#search").val()};
+            console.log(email)
+            if (KeyboardEvent.keyCode == 8) {
+                $("#search-icon").addClass('hidden')
+                return
+            }
+            if ($("#search").val() == "") {
+                $("#search-icon").addClass('hidden')
+                return
+            }
+            $("#search-icon").removeClass('hidden')
+            if (scheduled_function) {
+                clearTimeout(scheduled_function)
+            }
+            scheduled_function = setTimeout(ajax_call, delay_by_in_ms, "/profile/friends", email)
+        }));
+    </script>
+    <div id="results">
+        
+    </div>
+    {% endblock content%}
+</body>

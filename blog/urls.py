@@ -17,13 +17,14 @@ urlpatterns = [
     path('profile/<int:pk>/', views.profile, name='profile'),
     path('profile/<int:pk>/update/', ProfileUpdate.as_view(template_name='blog/profile_update.html'), name='profile_update'),
     path('change_password/', PasswordChangeView.as_view(template_name='blog/change_password.html'), name='change_password'),
-
+    path('profile/friends/', views.friends, name='friends'),
 
     path('<int:pk>/post/comment', views.comment, name='comment'),
     path('<int:pk>/post/comment/vote', views.comment_vote, name='comment_vote'),
 
     path('new_post/', views.new_post, name='new_post'),
     path('<int:pk>/post/', views.post, name='post'),
-    path('<int:pk>/post/vote', views.post_vote, name='post_vote'),
-
+    path('upvote', views.upvote_post, name='upvote_post'), 
+    path('downvote', views.downvote_post, name='downvote_post'),    
+       
 ]

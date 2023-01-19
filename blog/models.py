@@ -25,8 +25,8 @@ class User(AbstractUser):
         self.friends.remove(friend_to_remove)
 
     @classmethod
-    def create_user(cls, new_user):
-        new_blog_user = cls(user_id=new_user.id)
+    def create_user(cls, email):
+        new_blog_user = cls(email=email)
         new_blog_user.save()
         return new_blog_user
 

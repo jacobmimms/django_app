@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'tailwind',
     'theme',
     'django_browser_reload',
+    'api',
+    'rest_framework',
 ]
 
 CRISPY_TEMPLATE_PACK= 'bootstrap3'
@@ -125,7 +127,7 @@ INTERNAL_IPS = [
     "127.0.0.1",
 ]
 
-# Static files (CSS, JavaScript, Images)
+#  files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = 'static/'
