@@ -10,8 +10,6 @@ def contains_obj(container, field, obj, success, failure):
     else:
         return failure
 
-
-
 @register.filter
 def order_by(queryset, args):
     args = [x.strip() for x in args.split(',')]

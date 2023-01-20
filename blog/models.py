@@ -46,14 +46,15 @@ class Post(models.Model):
 
 class Comment(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, blank=True, null=True)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     votes = models.IntegerField(default=0)
     users_upvoted = models.ManyToManyField(User, blank=True, related_name='users_upvoted_comment')
     users_downvoted = models.ManyToManyField(User, blank=True, related_name='users_downvoted_comment')
-
+    parent_comment = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True)
+    children_comments = models.ManyToManyField('self', blank=True)
 
 
     def __str__(self):

@@ -1,12 +1,11 @@
-<!-- {% load static %} -->
 {% load static tailwind_tags %}
 <!DOCTYPE html>
 <html lang="en">
 {% tailwind_css %}
 <body>
-{% block header %}
 
-<header class="flex items-center justify-between w-screen bg-slate-200 text-slate-700 h-20">
+{% block header %}
+<header class="flex items-center justify-between w-screen bg-slate-200 text-slate-700 h-20 shadow-md shadow-slate-300">
   <div class="flex">
     <img src="{% static 'blog/images/BrosCodeLogo.png' %}" alt="logo" class="flex h-20 ml-1 rounded-full p-1">
   </div>
@@ -25,6 +24,7 @@
   </nav>
 </header>
 {% endblock %}
+
 </body>
  
 </html>

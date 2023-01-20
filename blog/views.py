@@ -28,6 +28,7 @@ def index(request):
     context = {'latest_posts_list': latest_posts_list, 'latest_posts_comments': latest_posts_comments}
     return render(request, 'blog/index.html', context)
 
+
 class Login(LoginView):
     redirect_authenticated_user = True
     template_name = 'blog/login.html'
@@ -39,6 +40,7 @@ class Login(LoginView):
         messages.error(self.request,'Invalid username or password')
         return self.render_to_response(self.get_context_data(form=form))
 
+
 class Logout(generic.RedirectView):
     url = reverse_lazy('blog:login')
     template_name = 'logout.html'
@@ -46,6 +48,7 @@ class Logout(generic.RedirectView):
     def get(self, request, *args, **kwargs):
         logout(request)
         return super().get(request, *args, **kwargs)
+
 
 class ChangePassword(generic.FormView):
     form_class = PasswordChangeForm
@@ -78,6 +81,7 @@ def register(req):
         form = NewUserForm()
     return render(req, 'blog/register.html', {'form': form})
 
+
 def new_post(request):
     if not request.user.is_authenticated:
         return HttpResponseRedirect(reverse('blog:login'))
@@ -94,6 +98,8 @@ def new_post(request):
 
 
 def friends(request):
+    if not request.user.is_authenticated:
+        return HttpResponseRedirect(reverse('blog:login'))
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
         email = request.GET.get('email')
         if email:
@@ -103,10 +109,8 @@ def friends(request):
             if not users:
                 return JsonResponse('', safe=False)
             html = render_to_string('blog/friend_search_results.html', {'users': users})
-            return JsonResponse(html, safe=False)
+            return JsonResponse(html, safe=False, status=200)
         return JsonResponse({'error': 'no email provided'}, status=400)
-    if not request.user.is_authenticated:
-        return HttpResponseRedirect(reverse('blog:login'))
     friends = request.user.friends.all()
     return render(request, 'blog/friends.html', {'friends': friends, 'user': request.user})
 
@@ -118,18 +122,36 @@ def post(request, pk):
 
 
 def comment(request, pk):
-    print(request.POST, pk)
-    post = get_object_or_404(Post, pk=pk)
-    new_comment =  request.POST.get('comment')
-    if not new_comment:
-        comments = Comment.objects.filter(post=post).order_by('-created_at')
-        return render(request, 'blog/post.html', {'post': post, 'comments': comments})
-    author = request.user
-    comment = Comment.objects.create(post=post, content=new_comment, author=author)
-    comment.save()
-    comments = Comment.objects.filter(post=post).order_by('-created_at')
-    return HttpResponseRedirect(reverse('blog:post', args=(post.id,)))
-
+    if not request.user.is_authenticated:
+        return HttpResponseRedirect(reverse('blog:login'))
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        post = get_object_or_404(Post, pk=pk)
+        parent_id = request.POST.get('parent_id')
+        parent = None
+        try:
+            parent = Post.objects.get(pk=parent_id)
+        except Post.DoesNotExist:
+            parent = Comment.objects.get(pk=parent_id)
+        content = request.POST.get('comment')
+        if not content or not parent:
+            return JsonResponse({'error': 'shit is whack yo'}, status=400)
+        if isinstance(parent, Post):
+            comment = Comment.objects.create(post=post, content=content, author=request.user)
+            comment.save()
+            comments = Comment.objects.filter(post=post)
+            html = render_to_string('blog/comment_fragment.html', {'comments': comments, 'csrf_token': request.META['CSRF_COOKIE']})
+            return JsonResponse(html, safe=False, status=200)
+        else:
+            print("got gere dogs")
+            parent_comment = get_object_or_404(Comment, pk=parent_id)
+            comment = Comment.objects.create(parent_comment=parent_comment, content=content, author=request.user)
+            comment.save()
+            parent_comment.children_comments.add(comment)
+            parent_comment.save()
+            comments = Comment.objects.filter(post=post)
+            html = render_to_string('blog/comment_fragment.html', {'comments': comments, 'csrf_token': request.META['CSRF_COOKIE']})
+            return JsonResponse(html, safe=False, status=200)
+    return JsonResponse({'error': 'somehting broke'}, status=400)
 
 def vote(request):
     if not request.user.is_authenticated:
