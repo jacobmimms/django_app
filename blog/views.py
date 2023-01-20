@@ -13,9 +13,12 @@ from .models import  Post, Comment, User
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.http import JsonResponse
-from django.core import serializers
 from django.template.loader import render_to_string
 
+modelDict = dict(
+    post=Post,
+    comment=Comment
+)
 
 def index(request):
     latest_posts_list = Post.objects.order_by('-created_at')[:5]
@@ -61,13 +64,6 @@ def profile(req, pk):
     return render(req, 'blog/profile.html', {'user': user, 'posts': posts, 'comments': comments})
 
 
-class ProfileUpdate(generic.UpdateView):
-    model = User
-    template_name = 'blog/profile_update.html'
-    fields = ['username', 'email']
-    success_url = reverse_lazy('blog:profile')
-
-
 def register(req):
     if req.method == "POST":
         form = NewUserForm(req.POST)
@@ -96,8 +92,8 @@ def new_post(request):
         form = PostForm()
     return render(request, 'blog/new_post.html', {'form': form})
 
+
 def friends(request):
-    # ajax requeset for searchign users by email
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
         email = request.GET.get('email')
         if email:
@@ -114,10 +110,12 @@ def friends(request):
     friends = request.user.friends.all()
     return render(request, 'blog/friends.html', {'friends': friends, 'user': request.user})
 
+
 def post(request, pk):
     post = get_object_or_404(Post, pk=pk)
     comments = Comment.objects.filter(post=post)
     return render(request, 'blog/post.html', {'post': post, 'comments': comments, 'user': request.user})
+
 
 def comment(request, pk):
     print(request.POST, pk)
@@ -133,86 +131,46 @@ def comment(request, pk):
     return HttpResponseRedirect(reverse('blog:post', args=(post.id,)))
 
 
-
-def upvote_post(request):
+def vote(request):
     if not request.user.is_authenticated:
         return HttpResponseRedirect(reverse('blog:login'))
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
-        post_id = request.GET.get('post_id')
-        post = get_object_or_404(Post, pk=post_id)
-        if request.user in post.users_upvoted_post.all():
-            post.users_upvoted_post.remove(request.user)
-            post.votes -= 1
-            post.save()
-            return JsonResponse({'votes': post.votes, 'id': post_id, "upvote":True, 'was_active':True, 'flip':False}, status=200)
-        elif request.user in post.users_downvoted_post.all():
-            post.users_downvoted_post.remove(request.user)
-            post.users_upvoted_post.add(request.user)
-            post.votes += 2
-            post.save()
-            return JsonResponse({'votes': post.votes, 'id': post_id,  "upvote":True, 'was_active': False, 'flip':True}, status=200)
+        id = request.POST.get('id')
+        vote_type = request.POST.get('vote_type')
+        obj_type = request.POST.get('obj_type')
+        obj = get_object_or_404(modelDict[obj_type], pk=id)
+        if request.user in obj.users_upvoted.all():
+            if vote_type == 'up':
+                obj.users_upvoted.remove(request.user)
+                obj.votes -= 1
+                obj.save()
+                return JsonResponse({'votes': obj.votes, 'id': id, "upvote":True, "vote_type":vote_type, 'was_active':True, 'flip':False}, status=200)
+            if vote_type == 'down':
+                obj.users_upvoted.remove(request.user)
+                obj.users_downvoted.add(request.user)
+                obj.votes -= 2
+                obj.save()
+                return JsonResponse({'votes': obj.votes, 'id': id,  "upvote":False,  "vote_type":vote_type, 'was_active': False, 'flip':True}, status=200)
+        elif request.user in obj.users_downvoted.all():
+            if vote_type == 'up':
+                obj.users_downvoted.remove(request.user)
+                obj.users_upvoted.add(request.user)
+                obj.votes += 2
+                obj.save()
+                return JsonResponse({'votes': obj.votes, 'id': id,  "upvote":True,  "vote_type":vote_type, 'was_active': False, 'flip':True}, status=200)
+            if vote_type == 'down':
+                obj.users_downvoted.remove(request.user)
+                obj.votes += 1
+                obj.save()
+                return JsonResponse({'votes': obj.votes, 'id': id,  "upvote":False,  "vote_type":vote_type, 'was_active':True, 'flip':False}, status=200)
         else:
-            post.users_upvoted_post.add(request.user)
-            post.votes += 1
-            post.save()
-            return JsonResponse({'votes': post.votes, 'id': post_id,  "upvote":True, 'was_active':False, 'flip':False}, status=200)
-
-def downvote_post(request):
-    if not request.user.is_authenticated:
-        return HttpResponseRedirect(reverse('blog:login'))
-    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
-        post_id = request.GET.get('post_id')
-        post = get_object_or_404(Post, pk=post_id)
-        if request.user in post.users_downvoted_post.all():
-            post.users_downvoted_post.remove(request.user)
-            post.votes += 1
-            post.save()
-            return JsonResponse({'votes': post.votes, 'id': post_id,  "upvote":False, 'was_active':True, 'flip':False}, status=200)
-        elif request.user in post.users_upvoted_post.all():
-            post.users_upvoted_post.remove(request.user)
-            post.users_downvoted_post.add(request.user)
-            post.votes -= 2
-            post.save()
-            return JsonResponse({'votes': post.votes, 'id': post_id,  "upvote":False, 'was_active': False, 'flip':True}, status=200)
-        else:
-            post.users_downvoted_post.add(request.user)
-            post.votes -= 1
-            post.save()
-            return JsonResponse({'votes': post.votes, 'id': post_id, "upvote":False, 'was_active':False, 'flip':False}, status=200)
-
-
-def comment_vote(req, pk):
-    if not req.user.is_authenticated:
-        return HttpResponseRedirect(reverse('blog:login'))
-    comment = get_object_or_404(Comment, pk=pk)
-    if req.POST.get('vote') == 'up':
-        if comment.users_downvoted_comment.contains(req.user):
-            comment.votes += 2
-            comment.users_downvoted_comment.remove(req.user)
-            comment.users_upvoted_comment.add(req.user)
-            comment.save()
-            return redirect(req.META['HTTP_REFERER'])
-        if comment.users_upvoted_comment.contains(req.user):
-            comment.votes -= 1
-            comment.users_upvoted_comment.remove(req.user)
-            comment.save()
-            return redirect(req.META['HTTP_REFERER'])
-        comment.users_upvoted_comment.add(req.user)
-        comment.votes += 1
-    elif req.POST.get('vote') == 'down':
-        if comment.users_upvoted_comment.contains(req.user):
-            comment.votes -= 2
-            comment.users_upvoted_comment.remove(req.user)
-            comment.users_downvoted_comment.add(req.user)
-            comment.save()
-            return redirect(req.META['HTTP_REFERER'])
-        if comment.users_downvoted_comment.contains(req.user):
-            comment.votes += 1
-            comment.users_downvoted_comment.remove(req.user)
-            comment.save()
-            return redirect(req.META['HTTP_REFERER'])
-        comment.users_downvoted_comment.add(req.user)
-        comment.votes -= 1
-    comment.save()
-    return redirect(req.META['HTTP_REFERER'])
-
+            if vote_type == 'up':
+                obj.users_upvoted.add(request.user)
+                obj.votes += 1
+                obj.save()
+                return JsonResponse({'votes': obj.votes, 'id': id,  "upvote":True,  "vote_type":vote_type, 'was_active':False, 'flip':False}, status=200)
+            if vote_type == 'down':
+                obj.users_downvoted.add(request.user)
+                obj.votes -= 1
+                obj.save()
+                return JsonResponse({'votes': obj.votes, 'id': id,  "upvote":False, "vote_type":vote_type, 'was_active':False, 'flip':False}, status=200)

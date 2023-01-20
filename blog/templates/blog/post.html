@@ -1,58 +1,89 @@
 {% extends "blog/base.html" %}
-
 {% load static tailwind_tags %}
 {% load crispy_forms_tags %}
 {% load custom_tags %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 <title>Home</title>
     {% tailwind_css %}
 </head>
 
-<body class="font-serif leading-normal tracking-normal">
+<body>
     {% block content %}
+
     <h1> {{post.title}} </h1>
     <h2> {{post.created_at}} </h2>
     <p> {{post.content}} </p>
     <p> {{post.votes}} </p>
-
-
-    <section class="bg-white dark:bg-gray-900 py-8 lg:py-16">
+    <script>
+        const arrows = {active:{up:'▲', down:'▼'}, inactive:{up:'△', down:'▽'}}
+        const active_up = '▲'
+        const active_down = '▼'
+        const inactive_up = '△'
+        const inactive_down = '▽'
+        let ajax_call = function (endpoint, request_parameters) {
+            $.post(endpoint, request_parameters)
+                .done(response => {
+                    if (response == false) {
+                        return
+                    }
+                    id = response.id
+                    element_id = `#${response.vote_type}${id}`
+                    other_id = response.vote_type == 'up' ? `#down${id}` : `#up${id}`
+                    vote_type = response.vote_type
+                    status = response.was_active ? "inactive" : "active"
+                    added_class = response.was_active ? 'bg-slate-300' : 'bg-slate-400'
+                    removed_class = response.was_active ? 'bg-slate-400' : 'bg-slate-300'
+                    $(element_id).html(arrows[status][vote_type])
+                    $(element_id).removeClass(removed_class)
+                    $(element_id).addClass(added_class)
+                    if (response.flip) {
+                        $(other_id).html(arrows.inactive[vote_type == 'up' ? 'down' : 'up'])
+                        $(other_id).removeClass(added_class)
+                        $(other_id).addClass(removed_class)
+                    }
+                    $(`#votes${id}`).html(response.votes)
+                })
+        }
+        let vote = (vote_type, obj_type, id) => {
+            ajax_call("{% url 'blog:vote' %}", {
+                vote_type: vote_type,
+                obj_type: obj_type,
+                id: id,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            })
+        }
+    </script>
+    <section class="bg-slate-300 text-slate-700 sm:py-2 md:py-4">
         <div class="max-w-2xl mx-auto px-4">
-            <div class="flex justify-between items-center mb-6">
-              <h2 class="text-lg lg:text-2xl font-bold text-gray-900 dark:text-white">Comments ({{comments.count}})</h2>
-            </div>
-
+            <h2 class="text-md lg:text-lg font-bold p-2">Comments ({{comments.count}})</h2>
             <form class="mb-6" action="{% url 'blog:comment' post.id%}" method="post">
                 {% csrf_token %}
-                <div class="py-2 px-4 mb-4 bg-white rounded-lg rounded-t-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+                <div class="py-2 px-4 mb-4 rounded-lg rounded-t-lg border border-slate-400">
                     <label for="comment" class="sr-only">Your comment</label>
-                    <textarea id="comment" name="comment" id="{{post.id}}" rows="6"
-                        class="px-0 w-full text-sm text-gray-900 border-0 focus:ring-0 focus:outline-none dark:text-white dark:placeholder-gray-400 dark:bg-gray-800"
-                        placeholder="Write a comment..." required>
-                    </textarea>
+                    <textarea id="comment" name="comment" id="{{post.id}}" rows="2" class="px-0 w-full border-0 focus:ring-0 focus:outline-none bg-slate-300 placeholder-slate-700" placeholder="Write a comment..." required></textarea>
                 </div>
-                <button type="submit" value="comment"
-                    class="inline-flex items-center py-2.5 px-4 text-xs font-medium text-center text-white bg-primary-700 rounded-lg focus:ring-4 focus:ring-primary-200 dark:focus:ring-primary-900 hover:bg-primary-800">
+                <button type="submit" value="comment" class="bg-slate-200 hover:bg-slate-400 active:bg-slate-300 rounded-xl p-2 shadow-sm shadow-slate-600 active:shadow-none active:text-slate-400">
                     Post comment
                 </button>
             </form>
 
-            {% for comment in comments %}
-            <article class="p-6 mb-6 text-base bg-white rounded-lg dark:bg-gray-900">
-                <footer class="flex justify-between items-center mb-2">
-                    <div class="flex items-center">
-                        <p class="inline-flex items-center mr-3 text-sm text-gray-900 dark:text-white"><img
+        {% for comment in comments|order_by:"-created_at" %}
+            <div class="px-4 py-1 my-1 rounded-lg {% cycle 'bg-slate-500' 'bg-slate-600' 'bg-slate-700' %}  {% cycle 'text-slate-100' 'text-slate-200' 'text-slate-300' %}">
+                
+                <div class="flex justify-between items-center mb-2">
+                    <div class="flex items-center ">
+                        <a href="{% url 'blog:profile' comment.author.pk %}" class="p-2 rounded-lg hover:bg-slate-400 hover:text-slate-700 inline-flex items-center mr-3 text-sm {% cycle 'text-slate-100' 'text-slate-200' 'text-slate-300' %}"><img
                                 class="mr-2 w-6 h-6 rounded-full"
                                 src="https://flowbite.com/docs/images/people/profile-picture-2.jpg"
-                                alt="{{comment.author.username}}">{{comment.author.username}}</p>
-                        <p class="text-sm text-gray-600 dark:text-gray-400"><time pubdate datetime="2022-02-08"
-                                title="February 8th, 2022">Feb. 8, 2022</time></p>
+                                alt="{{comment.author.username}}">{{comment.author.username}}</a>
+                        <p class="text-sm"><time pubdate datetime="2022-02-08"
+                                title="February 8th, 2022">{{comment.created_at}}</time></p>
                     </div>
+
                     <button id="dropdownComment1Button" data-dropdown-toggle="dropdownComment1"
-                        class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-400 bg-white rounded-lg hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-50 dark:bg-gray-900 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+                        class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-400 bg-white rounded-lg hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-50 dark:bg-slate-800 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
                         type="button">
                         <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20"
                             xmlns="http://www.w3.org/2000/svg">
@@ -62,8 +93,9 @@
                         </svg>
                         <span class="sr-only">Comment settings</span>
                     </button>
+                    
                     <!-- Dropdown menu -->
-                    <div id="dropdownComment1"
+                    <div id="dropdownMenu"
                         class="hidden z-10 w-36 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
                         <ul class="py-1 text-sm text-gray-700 dark:text-gray-200"
                             aria-labelledby="dropdownMenuIconHorizontalButton">
@@ -81,26 +113,47 @@
                             </li>
                         </ul>
                     </div>
-                </footer>
-                <p class="text-gray-500 dark:text-gray-400">{{comment.content}}</p>
-                <div class="flex items-center mt-4 space-x-4">
+                </div>
+
+                <div class="flex">
+                    <div id="vote_element" class="flex flex-row justify-center items-center">
+                        <div class="h-min w-8">
+                            <button class="p-1 text-slate-700 rounded-tr-xl {% contains_obj comment 'users_upvoted' user 'bg-slate-400' 'bg-slate-300' %} hover:bg-slate-400 active:bg-slate-500" id="up{{comment.id}}" onclick=vote('up','comment',{{comment.id}})>
+                                {% if user in comment.users_upvoted.all %}
+                                    ▲
+                                {% else %}
+                                    △
+                                {% endif %}
+                            </button>
+                            <button class="p-1 text-slate-700 rounded-bl-xl {% contains_obj comment 'users_downvoted' user 'bg-slate-400' 'bg-slate-300' %} hover:bg-slate-400 active:bg-slate-500" id="down{{comment.id}}" onclick=vote('down','comment',{{comment.id}})>
+                                {% if user in comment.users_downvoted.all %}
+                                    ▼
+                                {% else %}
+                                    ▽
+                                {% endif %}
+                            </button>
+                        </div>
+                        <div class="content-center text-center bg-purple-100 text-purple-900 w-10 m-2 p-2 rounded-xl flex flex-col justify-center h-auto" id="votes{{comment.id}}"> 
+                            {{comment.votes}}
+                        </div>
+                    </div>
+                    <p>{{comment.content}}</p>
+
+                </div>
+                <div class="flex items-center relative top-[-10px] justify-end">
                     <button type="button"
-                        class="flex items-center text-sm text-gray-500 hover:underline dark:text-gray-400">
+                        class="flex items-center text-sm hover:underline">
                         <svg aria-hidden="true" class="mr-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
                         Reply
                     </button>
                 </div>
-                                
-                <form class="mb-6" action="{% url 'blog:comment_vote' comment.id %}"  method="post">
-                    {% csrf_token %}
-                    <button name="vote" value="up">Upvote</button>
-                    <button name="vote" value="down">Downvote</button>
-                </form>
-            </article>
+            </div>
+
+            {% empty %}
+                <p>There are no comments</p>
             {% endfor %}
         </div>
       </section>
-    <p>There are no comments</p>
     {% endblock %}
 
 

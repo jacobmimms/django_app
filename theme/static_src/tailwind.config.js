@@ -4,7 +4,7 @@
  * If you need the full config, get it from here:
  * https://unpkg.com/browse/tailwindcss@latest/stubs/defaultConfig.stub.js
  */
-
+const colors = require("tailwindcss/colors");
 module.exports = {
     content: [
         /**
@@ -42,22 +42,22 @@ module.exports = {
          */
         // '../../**/*.py'
     ],
-    theme: {
-        extend: {
-            colors: {
-                'primary': '#000732',
-                'secondary': '#427BD2',
-                'accent': '#6890cc',
-                'accent-light': '#81a2d4',
-                'accent-dark': '#35363d',
-                'accent-darker': '#2d2f40',
-                'accent-darkest': '#242840',
-                'accent-lightest': '#a9bbd6',
-                'accent-lighter': '#92add6',
-                'text-accent-lightest': '#a9bbd6',
-            },
-        },
-    },
+    // theme: {
+    //     extend: {
+    //         // colors: {
+    //         //     'primary': '#b4ccde',
+    //         //     'secondary': '#c1d2de',
+    //         //     'accent': '#6890cc',
+    //         //     'accent-light': '#81a2d4',
+    //         //     'accent-dark': '#35363d',
+    //         //     'accent-darker': '#2d2f40',
+    //         //     'accent-darkest': '#09253b',
+    //         //     'accent-lightest': '#a9bbd6',
+    //         //     'accent-lighter': '#92add6',
+    //         //     'text-accent-lightest': '#a9bbd6',
+    //         // },
+    //     },
+    // },
     plugins: [
         /**
          * '@tailwindcss/forms' is the forms plugin that provides a minimal styling

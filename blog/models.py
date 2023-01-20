@@ -37,8 +37,8 @@ class Post(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     votes = models.IntegerField(default=0)
-    users_upvoted_post = models.ManyToManyField(User, blank=True, related_name='users_upvoted_post')
-    users_downvoted_post = models.ManyToManyField(User, blank=True, related_name='users_downvoted_post')
+    users_upvoted = models.ManyToManyField(User, blank=True, related_name='users_upvoted_post')
+    users_downvoted = models.ManyToManyField(User, blank=True, related_name='users_downvoted_post')
 
     
     def __str__(self):
@@ -51,8 +51,8 @@ class Comment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     votes = models.IntegerField(default=0)
-    users_upvoted_comment = models.ManyToManyField(User, blank=True, related_name='users_upvoted_comment')
-    users_downvoted_comment = models.ManyToManyField(User, blank=True, related_name='users_downvoted_comment')
+    users_upvoted = models.ManyToManyField(User, blank=True, related_name='users_upvoted_comment')
+    users_downvoted = models.ManyToManyField(User, blank=True, related_name='users_downvoted_comment')
 
 
 
