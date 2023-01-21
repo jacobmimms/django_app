@@ -34,6 +34,7 @@
                 comment: $(`#reply-text-area${parent_id}`).val(),
                 post_id: post_id,
                 parent_id: parent_id,
+                is_reply: "true",
                 csrfmiddlewaretoken: '{{ csrf_token }}',
             })
             $(`#reply-text-area${parent_id}`).val("")
@@ -54,6 +55,7 @@
                 comment: $(`#comment-text-area`).val(),
                 parent_id: parent_id,
                 post_id: parent_id,
+                is_reply: "false",
                 csrfmiddlewaretoken: '{{ csrf_token }}',
             })
             $("#comment-text-area").val("")
@@ -95,10 +97,18 @@
                 csrfmiddlewaretoken: '{{ csrf_token }}'
             })
         }
+        let sort = (sort_type) => {
+            $("#comment_section").get(0).scrollIntoView()
+
+        }
     </script>
     <section class="bg-slate-300 text-slate-700 sm:py-2 md:py-4">
         <div class="max-w-2xl mx-auto px-4">
-            <h2 class="text-md lg:text-lg font-bold p-2">Comments ({{comments.count}})</h2>
+            <div class="flex justify-between">
+                <h2 class="text-md lg:text-lg font-bold p-2">Comments ({{comments.count}})</h2>
+                <h3 class="text-md lg:text-lg font-bold p-2">Sort by: <a class="hover:cursor-pointer" onclick=sort("votes")>Votes</a> | <a  class="hover:cursor-pointer" onclick=sort("created_at")>Date</a></h3>
+            </div>
+
             <div class="mb-4" id="fake-form">
                 {% csrf_token %}
                 <div class="py-2 px-4 mb-4 rounded-lg rounded-t-lg border bg-slate-200 border-slate-300 shadow-sm shadow-slate-400">

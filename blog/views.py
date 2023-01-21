@@ -117,7 +117,7 @@ def friends(request):
 
 def post(request, pk):
     post = get_object_or_404(Post, pk=pk)
-    comments = Comment.objects.filter(post=post)
+    comments = Comment.objects.filter(post=post).filter(parent_comment=None).order_by('-created_at')
     return render(request, 'blog/post.html', {'post': post, 'comments': comments, 'user': request.user})
 
 
@@ -127,30 +127,15 @@ def comment(request, pk):
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
         post = get_object_or_404(Post, pk=pk)
         parent_id = request.POST.get('parent_id')
-        parent = None
-        try:
-            parent = Post.objects.get(pk=parent_id)
-        except Post.DoesNotExist:
-            parent = Comment.objects.get(pk=parent_id)
+        parent_comment = None
         content = request.POST.get('comment')
-        if not content or not parent:
-            return JsonResponse({'error': 'shit is whack yo'}, status=400)
-        if isinstance(parent, Post):
-            comment = Comment.objects.create(post=post, content=content, author=request.user)
-            comment.save()
-            comments = Comment.objects.filter(post=post)
-            html = render_to_string('blog/comment_fragment.html', {'comments': comments, 'csrf_token': request.META['CSRF_COOKIE']})
-            return JsonResponse(html, safe=False, status=200)
-        else:
-            print("got gere dogs")
+        if request.POST.get('is_reply') == 'true':
             parent_comment = get_object_or_404(Comment, pk=parent_id)
-            comment = Comment.objects.create(parent_comment=parent_comment, content=content, author=request.user)
-            comment.save()
-            parent_comment.children_comments.add(comment)
-            parent_comment.save()
-            comments = Comment.objects.filter(post=post)
-            html = render_to_string('blog/comment_fragment.html', {'comments': comments, 'csrf_token': request.META['CSRF_COOKIE']})
-            return JsonResponse(html, safe=False, status=200)
+        comment = Comment.objects.create(post=post,content=content, author=request.user, parent_comment=parent_comment)
+        comment.save()
+        comments = Comment.objects.filter(post=post).filter(parent_comment=None)
+        html = render_to_string('blog/comment_fragment.html', {'comments': comments, 'csrf_token': request.META['CSRF_COOKIE']})
+        return JsonResponse(html, safe=False, status=200)
     return JsonResponse({'error': 'somehting broke'}, status=400)
 
 def vote(request):

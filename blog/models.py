@@ -54,7 +54,6 @@ class Comment(models.Model):
     users_upvoted = models.ManyToManyField(User, blank=True, related_name='users_upvoted_comment')
     users_downvoted = models.ManyToManyField(User, blank=True, related_name='users_downvoted_comment')
     parent_comment = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True)
-    children_comments = models.ManyToManyField('self', blank=True)
 
 
     def __str__(self):
