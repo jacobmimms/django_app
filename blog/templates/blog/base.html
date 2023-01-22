@@ -1,6 +1,6 @@
 {% load static tailwind_tags %}
 <!DOCTYPE html>
-<html lang="en" class="font-sans w-full max-w-full h-max text-slate-700 bg-slate-200">
+<html lang="en" class="font-sans w-full max-w-full h-full h-max-full text-slate-700 bg-slate-200">
 	<head>
     <title>BrosCode</title>
 		<meta charset="UTF-8">
@@ -8,20 +8,46 @@
 		<meta http-equiv="X-UA-Compatible" content="ie=edge">
 		{% tailwind_css %}
 	</head>
-
-	<body class="w-full max-w-full flex flex-col justify-left align-middle">
+    
+	<body class="fixed flex flex-col w-full h-full justify-right align-middle">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> 
-        <div id="header">
+
+        <div id="header" class="h-auto">
             {% block header %}
             {% include "blog/header.html" %}
             {% endblock %}
         </div>
-        
-        <div id="main_content h-max" class="h-full">
+        <div id="main-content" class="h-full overflow-scroll">
+            <script>
+                $('#main-content').scroll(function() { 
+                    if($('#main-content').scrollTop() === 0) {
+                        console.log("tip!")
+                        $("#header").show(200);
+                    }
+                });
+                var lastScrollTop = 0;
+                var last_time = Date.now();
+                $('#main-content').on('scroll', function() {
+                    var elapsed = Date.now() - last_time
+                    if (elapsed < 200) {
+                        return;
+                    }
+                    st = $(this).scrollTop();
+                    if(st-lastScrollTop > 70) {
+                        console.log(st-lastScrollTop)
+                        $('#header').hide(200);
+                    }
+                    else if (st-lastScrollTop < -70) {
+                        $('#header').show(200);
+                    }
+                    last_time = Date.now();
+                    lastScrollTop = st;
+                });
+            </script>
             {% block content %}{% endblock %}       
         </div>
         
-        <div id="footer">
+        <div id="footer h-full">
             {% block footer %}
             {% include "blog/footer.html" %}
             {% endblock %}

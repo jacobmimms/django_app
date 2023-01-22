@@ -48,8 +48,8 @@
     {% if latest_posts_list %}
         <ul class="flex flex-col w-10/12 align-middle items-center justify-center">
         {% for post in latest_posts_list %} 
-        <div class="w-full rounded-lg h-full">
-            <li class="flex my-2 items-center bg-primary text-accent-darkest w-full h-full rounded-lg">
+        <div class="w-full h-full border-b-2 border-slate-400">
+            <li class=" flex my-2 items-center bg-primary text-accent-darkest w-full h-full rounded-lg">
                 <!-- <form class="h-min w-8" id="vote" onc> -->
                 <div class="h-min w-8">
                     <button class="p-1 rounded-tr-xl bg-slate-300 hover:bg-slate-400 active:bg-slate-500" id="up{{post.id}}" onclick=vote('up','post',{{post.id}})>
