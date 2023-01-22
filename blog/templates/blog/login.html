@@ -1,31 +1,31 @@
+{% extends "blog/base.html" %}
 {% load static tailwind_tags %}
-<!DOCTYPE html>
-<html lang="en">
+{% load crispy_forms_tags %}
+{% load custom_tags %}
 	<head>
     <title>Django Tailwind App Test</title>
 		{% tailwind_css %}
 	</head>
-
+<body>
 {%block content%}
-  <div class="center">
-	  <form method="post" class="card" novalidate>
+  <div>
+	<form class="flex flex-col justify-center"  method="post" novalidate>
 	  	{% csrf_token %}
 	    <h2 class="text-center">Log in to your account</h2>
 		{% for field in form %}
+			<div class="mx-10 flex p-2 flex-col bg-slate-300 justify-center rounded-xl">
 	    		{{ field.label_tag }} 
 	        	{{ field }}
 	        	{% if field.errors %}
 	        		<small>{{ field.errors|striptags }}</small> 
 	        	{% endif %}
+			</div>
 		{% endfor %}
-		
-		<input type="submit" value="Login" class="btn btn-primary full-width">
+		<input type="submit" value="Login" class=" ">
 		<hr>
 		<p class="text-center">Forgot your password <a href="{% url 'blog:change_password' %}">Reset Password</a></p>
 		<p class="text-center">Don't have a account? <a href="{% url 'blog:register'%}">Join Now</a></p>
 	</form>
 </div>
-
 {%endblock content%}
-
-</html>
+</body>

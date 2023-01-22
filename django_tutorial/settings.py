@@ -38,16 +38,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'crispy_forms',
     'bootstrap3',
     'tailwind',
     'theme',
     'django_browser_reload',
     'api',
     'rest_framework',
+    "crispy_forms",               
+    "crispy_tailwind",    
 ]
 
-CRISPY_TEMPLATE_PACK= 'bootstrap3'
+CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
+CRISPY_TEMPLATE_PACK = "tailwind"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

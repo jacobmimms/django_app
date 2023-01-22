@@ -123,7 +123,7 @@ def post(request, pk):
 
 def comment(request, pk):
     if not request.user.is_authenticated:
-        return HttpResponseRedirect(reverse('blog:login'))
+        return JsonResponse("fail", safe=False, status=200)
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
         post = get_object_or_404(Post, pk=pk)
         parent_id = request.POST.get('parent_id')

@@ -1,0 +1,13 @@
+{% load static tailwind_tags %}
+<head>
+    {% tailwind_css %}
+</head>
+<body class="fixed border-2 border-red-500 right-1/2 left-1/2">
+    {% block login_warning%}
+    <div class="hover:cursor-pointer h-full w-full flex flex-col content-center justify-center align-middle">
+        <span class="justify-center align-middle text-center text-2xl">
+            You must be logged in to complete this action.
+        </span> 
+    </div>
+    {% endblock %}
+</body>

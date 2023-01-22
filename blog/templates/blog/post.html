@@ -56,9 +56,8 @@
         let ajax_reply = function (endpoint, request_parameters) {
             $.post(endpoint, request_parameters)
                 .done(response => {
-                    if (response == false) {
-                        console.log("fail")
-                        $("#comment_section").html("Sorry, no friends could be found")
+                    if (response == "fail") {
+                        $('#login-warning').show()
                         return
                     }
                     $("#comment_section").html(response)
@@ -80,9 +79,9 @@
         let ajax_comment = function (endpoint, request_parameters) {
             $.post(endpoint, request_parameters)
                 .done(response => {
-                    if (response == false) {
+                    if (response == "fail") {
                         console.log("fail")
-                        $("#comment_section").html("Sorry, no friends could be found")
+                        $('#login-warning').show()
                         return
                     }
                     $("#comment_section").html(response)

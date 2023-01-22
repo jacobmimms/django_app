@@ -21,7 +21,6 @@
             <script>
                 $('#main-content').scroll(function() { 
                     if($('#main-content').scrollTop() === 0) {
-                        console.log("tip!")
                         $("#header").show(200);
                     }
                 });
@@ -50,6 +49,12 @@
         <div id="footer h-full">
             {% block footer %}
             {% include "blog/footer.html" %}
+            {% endblock %}
+        </div>
+
+        <div id="login-warning" class="hidden absolute z-10 h-[25%] w-[40%] left-[30%] top-[40%] bg-red-200 border-2 border-red-600 rounded-2xl"  onclick="$(this).hide();">
+            {% block login_warning %}
+            {% include "blog/login_warning.html" %}
             {% endblock %}
         </div>
 	</body>
