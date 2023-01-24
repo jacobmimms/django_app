@@ -8,7 +8,7 @@ from django.contrib.auth.views import LoginView
 from django.contrib.auth.forms import (
     PasswordChangeForm
 )
-from .forms import NewUserForm, PostForm
+from .forms import NewUserForm, PostForm, ProfilePictureForm
 from .models import  Post, Comment, User
 from django.urls import reverse_lazy
 from django.contrib import messages
@@ -61,19 +61,36 @@ class ChangePassword(generic.FormView):
 
 
 def profile(req, pk):
+    if not req.user.is_authenticated:
+        return HttpResponseRedirect(reverse('blog:login'))
+    form = ProfilePictureForm(req.POST, req.FILES)
+    if req.method == 'POST':
+        if form.is_valid():
+            user = get_object_or_404(User, pk=pk)
+            user.profile_picture = req.FILES.get('profile_picture')
+            print(req.FILES.get('profile_picture'))
+            user.save()
+            return HttpResponseRedirect(reverse('blog:profile', args=(user.id,)))
     user = get_object_or_404(User, pk=pk)
     posts = Post.objects.filter(author=user)
     comments = Comment.objects.filter(author=user)
-    return render(req, 'blog/profile.html', {'user': user, 'posts': posts, 'comments': comments})
+    return render(req, 'blog/profile.html', {'user': user, 'posts': posts, 'comments': comments, 'form': form})
 
 
 def register(req):
     if req.method == "POST":
         form = NewUserForm(req.POST)
         if form.is_valid():
-            user = form.save()
-            blog_user = User.create_user(user.email)
-            blog_user.save()
+            if form.duplicate_email():
+                messages.error(req, "Unsuccessful registration. Email already exists.")
+                return render(req, 'blog/register.html', {'email_error': 'Email already exists', 'form': form})
+            
+            user = User.objects.create_user(
+                username=form.cleaned_data['username'],
+                email=form.cleaned_data['email'],
+                password=form.cleaned_data['password1'],
+            )
+            user.save()
             login(req, user)
             return redirect('blog:index')
         messages.error(req, "Unsuccessful registration. Invalid information.")

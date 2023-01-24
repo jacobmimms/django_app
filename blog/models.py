@@ -4,7 +4,9 @@ from django.contrib import admin
 from django.contrib.auth.models import User, AbstractUser
 
 class User(AbstractUser):
+    email = models.EmailField(max_length=254, unique=True, blank=False, null=False)
     friends = models.ManyToManyField('self', blank=True)
+    profile_picture = models.ImageField(upload_to='images/', default='images/default.jpg', blank=True, null=True)
 
     def __str__(self):
         return self.username
@@ -23,12 +25,6 @@ class User(AbstractUser):
 
     def remove_friend(self, friend_to_remove):
         self.friends.remove(friend_to_remove)
-
-    @classmethod
-    def create_user(cls, email):
-        new_blog_user = cls(email=email)
-        new_blog_user.save()
-        return new_blog_user
 
 class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)

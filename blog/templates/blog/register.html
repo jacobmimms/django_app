@@ -22,7 +22,13 @@
 					<small>{{ field.errors|striptags }}</small> 
 				{% endif %}
 			</div>
-		{% endfor %}              
+		{% endfor %}          
+		{% if email_error %}
+			<div class="mx-10 flex
+			p-2 flex-col bg-red-300 justify-center rounded-xl">
+				{{email_error}}
+			</div>
+		{% endif %}
 		<button class="btn btn-primary" type="submit">Register</button>
 	</form>
 	<p class="text-center">If you already have an account, <a href="{%url 'blog:login'%}">login</a> instead.</p>

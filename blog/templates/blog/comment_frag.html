@@ -2,15 +2,14 @@
 {% load static tailwind_tags %}
 {% load static %}
 {% block comment %}
-<div id="comment{{comment.id}}" class="px-4 py-1 my-1 rounded-lg bg-slate-500 text-slate-100 %}">       
+<div id="comment{{comment.id}}" class="py-1 my-1 rounded-lg bg-slate-500 text-slate-100 %}">       
     <div class="flex justify-between items-center mb-2">
         <div class="flex items-center ">
             <a href="{% url 'blog:profile' comment.author.pk %}" class="p-2 rounded-lg hover:bg-slate-400 hover:text-slate-700 inline-flex items-center mr-3 text-sm {% cycle 'text-slate-100' 'text-slate-200' 'text-slate-300' %}"><img
                     class="mr-2 w-6 h-6 rounded-full"
-                    src="https://flowbite.com/docs/images/people/profile-picture-2.jpg"
+                    src="{{comment.author.profile_picture.url}}"
                     alt="{{comment.author.username}}">{{comment.author.username}}</a>
-            <p class="text-sm"><time pubdate datetime="2022-02-08"
-                    title="February 8th, 2022">{{comment.created_at}}</time></p>
+            <p class="text-sm">{{comment.created_at|time}}, {{comment.created_at|date:"d M Y"}}</p>
         </div>
         <button id="dropdownComment1Button" data-dropdown-toggle="dropdownMenu"
             class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-400 rounded-lg  focus:ring-0 focus:outline-none bg-slate-600 hover:bg-slate-700 shadow-sm shadow-slate-900 active:shadow-none"
@@ -43,17 +42,17 @@
         </div>
     </div>
 
-    <div id="commentbody{{comment.id}}" class="flex border-2 {% cycle 'bg-slate-500' 'bg-slate-600' 'bg-slate-700' %} {% cycle 'border-slate-600' 'border-slate-700' 'border-slate-500' %} rounded-xl">
+    <div id="commentbody{{comment.id}}" class="flex border-2 bg-slate-400 {% cycle 'bg-slate-500' 'bg-slate-600' 'bg-slate-700' %} {% cycle 'border-slate-600' 'border-slate-700' 'border-slate-500' %} rounded-xl">
         <div id="vote_element" class="flex flex-row justify-center items-center">
-            <div class="h-min w-8">
-                <button class="p-1 text-slate-700 rounded-tl-xl rounded-tr-md {% contains_obj comment 'users_upvoted' user 'bg-slate-400' 'bg-slate-300' %} hover:bg-slate-400 active:bg-slate-500" id="up{{comment.id}}" onclick=vote('up','comment',{{comment.id}})>
+            <div class="flex flex-col pr-2">
+                <button class="p-1 text-slate-700 rounded-t-md {% contains_obj comment 'users_upvoted' user 'bg-slate-400' 'bg-slate-300' %} hover:bg-slate-400 active:bg-slate-500" id="up{{comment.id}}" onclick=vote('up','comment',{{comment.id}})>
                     {% if user in comment.users_upvoted.all %}
                         ▲
                     {% else %}
                         △
                     {% endif %}
                 </button>
-                <button class="p-1 text-slate-700 rounded-bl-xl rounded-br-md {% contains_obj comment 'users_downvoted' user 'bg-slate-400' 'bg-slate-300' %} hover:bg-slate-400 active:bg-slate-500" id="down{{comment.id}}" onclick=vote('down','comment',{{comment.id}})>
+                <button class="p-1 text-slate-700 rounded-b-md {% contains_obj comment 'users_downvoted' user 'bg-slate-400' 'bg-slate-300' %} hover:bg-slate-400 active:bg-slate-500" id="down{{comment.id}}" onclick=vote('down','comment',{{comment.id}})>
                     {% if user in comment.users_downvoted.all %}
                         ▼
                     {% else %}
@@ -61,13 +60,36 @@
                     {% endif %}
                 </button>
             </div>
-            <div class="content-center text-center bg-slate-300 text-slate-700 w-10 m-2 p-2 rounded-xl flex flex-col justify-center h-auto" id="votes{{comment.id}}"> 
+            <div class="content-center text-center bg-slate-300 text-slate-700 w-10 p-2 rounded-xl flex flex-col justify-center h-auto" id="votes{{comment.id}}"> 
                 {{comment.votes}}
             </div>
         </div>
-        <p class="pl-3">{{comment.content}}</p>
+        <p class="pl-2">{{comment.content}}</p>
     </div>
-    <div class="flex items-center relative top-[-10px] justify-end">
+    <div class="flex items-center relative top-[-0px] justify-end">
+        <div id="hide-replies">
+            <button id="hide-replies{{comment.id}}"
+                onclick="
+                    $('#comment{{comment.id}}-replies').toggleClass('hidden');
+                    $('#hide-replies{{comment.id}}').toggleClass('hidden');
+                    $('#show-replies{{comment.id}}').toggleClass('hidden');
+                "
+                type="button"
+                class="hidden items-center text-sm hover:underline pr-2">
+                Hide Replies    
+            </button>
+            <button 
+                id="show-replies{{comment.id}}"
+                onclick="
+                    $('#comment{{comment.id}}-replies').toggleClass('hidden');
+                    $('#hide-replies{{comment.id}}').toggleClass('hidden');
+                    $('#show-replies{{comment.id}}').toggleClass('hidden');
+                "
+                type="button"
+                class="items-center text-sm hover:underline pr-2">
+                Show Replies    
+            </button>
+        </div>
         <button 
             onclick="
                 document.getElementById('reply{{comment.id}}').classList.toggle('hidden');
@@ -88,11 +110,11 @@
         </button>
     </div>
     {% if comment.comment_set.all %}
-        <ul id="comment{{comment.id}}-replies"  class="ml-[5%] border-2 border-slate-800 rounded-xl">
-                {% include "blog/comment_list.html" with comments=comment.comment_set.all %}
+        <ul id="comment{{comment.id}}-replies"  class="hidden ml-[1%]  h-full rounded-xl">
+            {% include "blog/comment_list.html" with comments=comment.comment_set.all %}
         </ul>
     {% else %}
-        <ul id="comment{{comment.id}}-replies" class="hidden ml-[5%] border-2 border-slate-800 rounded-xl">
+        <ul id="comment{{comment.id}}-replies" class="hidden ml-[1%]  border-slate-800 rounded-xl">
         </ul>
     {% endif %}
 
