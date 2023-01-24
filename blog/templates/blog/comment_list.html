@@ -1,0 +1,7 @@
+{% load custom_tags %}
+{% block comment_list %}
+    {% for comment_ in comments|order_by:'-created_at' %}
+        {% include "blog/comment_frag.html" with comment=comment_ %}
+    {% endfor %}
+{% endblock %}
+

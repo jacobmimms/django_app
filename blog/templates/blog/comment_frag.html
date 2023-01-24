@@ -1,0 +1,100 @@
+{% load custom_tags %}
+{% load static tailwind_tags %}
+{% load static %}
+{% block comment %}
+<div id="comment{{comment.id}}" class="px-4 py-1 my-1 rounded-lg bg-slate-500 text-slate-100 %}">       
+    <div class="flex justify-between items-center mb-2">
+        <div class="flex items-center ">
+            <a href="{% url 'blog:profile' comment.author.pk %}" class="p-2 rounded-lg hover:bg-slate-400 hover:text-slate-700 inline-flex items-center mr-3 text-sm {% cycle 'text-slate-100' 'text-slate-200' 'text-slate-300' %}"><img
+                    class="mr-2 w-6 h-6 rounded-full"
+                    src="https://flowbite.com/docs/images/people/profile-picture-2.jpg"
+                    alt="{{comment.author.username}}">{{comment.author.username}}</a>
+            <p class="text-sm"><time pubdate datetime="2022-02-08"
+                    title="February 8th, 2022">{{comment.created_at}}</time></p>
+        </div>
+        <button id="dropdownComment1Button" data-dropdown-toggle="dropdownMenu"
+            class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-400 rounded-lg  focus:ring-0 focus:outline-none bg-slate-600 hover:bg-slate-700 shadow-sm shadow-slate-900 active:shadow-none"
+            type="button">
+            <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20"
+                xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z">
+                </path>
+            </svg>
+            <span class="sr-only">Comment settings</span>
+        </button>
+        <div id="dropdownMenu"
+            class="hidden z-10 w-36 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
+            <ul class="py-1 text-sm text-gray-700 dark:text-gray-200"
+                aria-labelledby="dropdownMenuIconHorizontalButton">
+                <li>
+                    <a href="#"
+                        class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Edit</a>
+                </li>
+                <li>
+                    <a href="#"
+                        class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Remove</a>
+                </li>
+                <li>
+                    <a href="#"
+                        class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Report</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="commentbody{{comment.id}}" class="flex border-2 {% cycle 'bg-slate-500' 'bg-slate-600' 'bg-slate-700' %} {% cycle 'border-slate-600' 'border-slate-700' 'border-slate-500' %} rounded-xl">
+        <div id="vote_element" class="flex flex-row justify-center items-center">
+            <div class="h-min w-8">
+                <button class="p-1 text-slate-700 rounded-tl-xl rounded-tr-md {% contains_obj comment 'users_upvoted' user 'bg-slate-400' 'bg-slate-300' %} hover:bg-slate-400 active:bg-slate-500" id="up{{comment.id}}" onclick=vote('up','comment',{{comment.id}})>
+                    {% if user in comment.users_upvoted.all %}
+                        ▲
+                    {% else %}
+                        △
+                    {% endif %}
+                </button>
+                <button class="p-1 text-slate-700 rounded-bl-xl rounded-br-md {% contains_obj comment 'users_downvoted' user 'bg-slate-400' 'bg-slate-300' %} hover:bg-slate-400 active:bg-slate-500" id="down{{comment.id}}" onclick=vote('down','comment',{{comment.id}})>
+                    {% if user in comment.users_downvoted.all %}
+                        ▼
+                    {% else %}
+                        ▽
+                    {% endif %}
+                </button>
+            </div>
+            <div class="content-center text-center bg-slate-300 text-slate-700 w-10 m-2 p-2 rounded-xl flex flex-col justify-center h-auto" id="votes{{comment.id}}"> 
+                {{comment.votes}}
+            </div>
+        </div>
+        <p class="pl-3">{{comment.content}}</p>
+    </div>
+    <div class="flex items-center relative top-[-10px] justify-end">
+        <button 
+            onclick="
+                document.getElementById('reply{{comment.id}}').classList.toggle('hidden');
+            "
+            type="button"
+            class="flex items-center text-sm hover:underline">
+            <svg aria-hidden="true" class="mr-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+            Reply
+        </button>
+    </div>
+    <div id="reply{{comment.id}}" class="hidden w-full text-slate-700 justify-center content-center pb-2">
+        <div class="py-2 px-4 mb-4 rounded-lg rounded-t-lg border bg-slate-200 border-slate-300 shadow-sm shadow-slate-400">
+            <label for="comment" class="sr-only">Your comment</label>
+            <textarea id="reply-text-area{{comment.id}}" name="comment" rows="2" class="px-0 text-sm p-2 w-full border-0 focus:ring-0 focus:outline-none bg-slate-200 placeholder-slate-700 rounded-md" placeholder="Write a comment..." required></textarea>
+        </div>
+        <button onclick=reply({{comment.post.id}},{{comment.id}}) type="submit" value="comment" class="bg-slate-200 hover:bg-slate-400 rounded-xl p-2 shadow-sm shadow-slate-600 active:shadow-sm">
+            Post Reply
+        </button>
+    </div>
+    {% if comment.comment_set.all %}
+        <ul id="comment{{comment.id}}-replies"  class="ml-[5%] border-2 border-slate-800 rounded-xl">
+                {% include "blog/comment_list.html" with comments=comment.comment_set.all %}
+        </ul>
+    {% else %}
+        <ul id="comment{{comment.id}}-replies" class="hidden ml-[5%] border-2 border-slate-800 rounded-xl">
+        </ul>
+    {% endif %}
+
+</div>  
+{% endblock %}

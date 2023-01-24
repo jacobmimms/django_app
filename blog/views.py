@@ -126,15 +126,17 @@ def comment(request, pk):
         return JsonResponse("fail", safe=False, status=200)
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
         post = get_object_or_404(Post, pk=pk)
-        parent_id = request.POST.get('parent_id')
-        parent_comment = None
         content = request.POST.get('comment')
         if request.POST.get('is_reply') == 'true':
+            parent_id = request.POST.get('parent_id')
             parent_comment = get_object_or_404(Comment, pk=parent_id)
-        comment = Comment.objects.create(post=post,content=content, author=request.user, parent_comment=parent_comment)
+            reply = Comment.objects.create(post=post,content=content, author=request.user, parent_comment=parent_comment)
+            reply.save()
+            html = render_to_string('blog/comment_frag.html', {'comment': reply, 'csrf_token': request.META['CSRF_COOKIE']})
+            return JsonResponse({'html':html,'parent_id':parent_id}, safe=False, status=200)
+        comment = Comment.objects.create(post=post,content=content, author=request.user, parent_comment=None)
         comment.save()
-        comments = Comment.objects.filter(post=post).filter(parent_comment=None)
-        html = render_to_string('blog/comment_fragment.html', {'comments': comments, 'csrf_token': request.META['CSRF_COOKIE']})
+        html = render_to_string('blog/comment_frag.html', {'comment': comment, 'csrf_token': request.META['CSRF_COOKIE']})
         return JsonResponse(html, safe=False, status=200)
     return JsonResponse({'error': 'somehting broke'}, status=400)
 

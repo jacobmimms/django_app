@@ -52,7 +52,10 @@
             </div>
         </div>
     </div>
+
+
     <script>
+
         let ajax_reply = function (endpoint, request_parameters) {
             $.post(endpoint, request_parameters)
                 .done(response => {
@@ -60,13 +63,21 @@
                         $('#login-warning').show()
                         return
                     }
-                    $("#comment_section").html(response)
+                    parent_id = request_parameters.parent_id
+                    $(`#comment${parent_id}-replies`).prepend(response.html)
+                    $(`#comment${parent_id}-replies`).removeClass("hidden")
+                    $(`#reply${parent_id}`).addClass("hidden")
+
+
                 })
         }
         let reply = function (post_id, parent_id) {
+            if ($(`#reply-text-area${parent_id}`).val().trim() == "" || $(`#reply-text-area${parent_id}`).val().trim() == null) {
+                $(`#reply-text-area${parent_id}`).val("")
+                return
+            }
+
             var endpoint = "{% url 'blog:comment' 12345 %}".replace('/12345/', '/' + post_id + '/');
-            console.log(endpoint)
-            console.log(parent_id)
             ajax_reply(endpoint, {
                 comment: $(`#reply-text-area${parent_id}`).val(),
                 post_id: post_id,
@@ -80,14 +91,17 @@
             $.post(endpoint, request_parameters)
                 .done(response => {
                     if (response == "fail") {
-                        console.log("fail")
                         $('#login-warning').show()
                         return
                     }
-                    $("#comment_section").html(response)
+                    $("#comment-section").prepend(response)
                 })
         }
         let comment = function (parent_id) {
+            if ($(`#comment-text-area`).val().trim() == "" || $(`#comment-text-area`).val().trim() == null) {
+                $("#comment-text-area").val("")
+                return
+            }
             ajax_comment("{% url 'blog:comment' post.id%}", {
                 comment: $(`#comment-text-area`).val(),
                 parent_id: parent_id,
@@ -97,12 +111,8 @@
             })
             $("#comment-text-area").val("")
         }
-        const arrows = {active:{up:'▲', down:'▼'}, inactive:{up:'△', down:'▽'}}
-        const active_up = '▲'
-        const active_down = '▼'
-        const inactive_up = '△'
-        const inactive_down = '▽'
         let ajax_vote = function (endpoint, request_parameters) {
+            const arrows = {active:{up:'▲', down:'▼'}, inactive:{up:'△', down:'▽'}}
             $.post(endpoint, request_parameters)
                 .done(response => {
                     if (response == false) {
@@ -135,14 +145,17 @@
             })
         }
         let sort = (sort_type) => {
-            $("#comment_section").get(0).scrollIntoView()
-
+            $("#comment-section").get(0).scrollIntoView()
         }
+        $("body").on('DOMSubtreeModified', "#comment-section", function() {
+            $("#comment-count").html(`Comments (${$("#comment-section").children().length})`);
+        });
+        
     </script>
     <section class="bg-slate-300 text-slate-700 sm:py-2 md:py-4">
         <div class="max-w-2xl mx-auto px-4">
             <div class="flex justify-between">
-                <h2 class="text-md lg:text-lg font-bold p-2">Comments ({{comments.count}})</h2>
+                <h2 id="comment-count" class="text-md lg:text-lg font-bold p-2">Comments ({{comments.count}})</h2>
                 <h3 class="text-md lg:text-lg font-bold p-2">Sort by: <a class="hover:cursor-pointer" onclick=sort("votes")>Votes</a> | <a  class="hover:cursor-pointer" onclick=sort("created_at")>Date</a></h3>
             </div>
 
@@ -157,11 +170,9 @@
                 </button>
             </div>
 
-        <div id="comment_section">
-            {% block comment %}
-            {% include "blog/comment_fragment.html" %}
-            {% endblock %}
-        </div>
+            <div id="comment-section">
+                {% include "blog/comment_list.html" %}
+            </div>
      
         </div>
       </section>

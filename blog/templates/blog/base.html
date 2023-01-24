@@ -11,13 +11,12 @@
     
 	<body class="fixed flex flex-col w-full h-full justify-right align-middle">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> 
-
-        <div id="header" class="h-auto">
+        <div id="header" class="sticky top-0 h-auto">
             {% block header %}
             {% include "blog/header.html" %}
             {% endblock %}
         </div>
-        <div id="main-content" class="h-full overflow-scroll">
+        <div id="main-content" class=" h-full overflow-scroll">
             <script>
                 $('#main-content').scroll(function() { 
                     if($('#main-content').scrollTop() === 0) {
@@ -26,18 +25,17 @@
                 });
                 var lastScrollTop = 0;
                 var last_time = Date.now();
-                $('#main-content').on('scroll', function() {
+                $('#main-content').scroll(function() {
                     var elapsed = Date.now() - last_time
                     if (elapsed < 200) {
                         return;
                     }
                     st = $(this).scrollTop();
                     if(st-lastScrollTop > 70) {
-                        console.log(st-lastScrollTop)
-                        $('#header').hide(200);
+                        $('#header').hide(200, easing='linear');
                     }
                     else if (st-lastScrollTop < -70) {
-                        $('#header').show(200);
+                        $('#header').show(200, easing='linear');
                     }
                     last_time = Date.now();
                     lastScrollTop = st;
