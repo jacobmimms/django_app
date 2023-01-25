@@ -5,46 +5,13 @@
 <html lang="en">
 <head>
     <title>BrosCode Main Page</title>
-    <script type="text/javascript" src="{% static 'blog/app.js' %}"></script>  
     {% tailwind_css %}
 </head>
-<body >
+<body>
     {% block content %}
     <a class="flex bg-slate-300 justify-center bg-accent-dark hover:bg-slate-400 text-accent-lighter font-bold py-2 px-4 rounded" href="{% url 'blog:new_post'%}">New Post?</a>
     <div id="postList" class="flex flex-col w-full align-middle items-center justify-center">
-    <script>
-        const arrows = {active:{up:'▲', down:'▼'}, inactive:{up:'△', down:'▽'}}
-        const active_up = '▲'
-        const active_down = '▼'
-        const inactive_up = '△'
-        const inactive_down = '▽'
-        let ajax_call = function (endpoint, request_parameters) {
-            $.post(endpoint, request_parameters)
-                .done(response => {
-                    if (response == false) {
-                        return
-                    }
-                    id = response.id
-                    element_id = `#${response.vote_type}${id}`
-                    other_id = response.vote_type == 'up' ? `#down${id}` : `#up${id}`
-                    vote_type = response.vote_type
-                    status = response.was_active ? "inactive" : "active"
-                    $(element_id).html(arrows[status][vote_type])
-                    if (response.flip) {
-                        $(other_id).html(arrows.inactive[vote_type == 'up' ? 'down' : 'up'])
-                    }
-                    $(`#votes${response.id}`).html(response.votes)
-                })
-        }
-        let vote = (vote_type, obj_type, id) => {
-            ajax_call("{% url 'blog:vote' %}", {
-                vote_type: vote_type,
-                obj_type: obj_type,
-                id: id,
-                csrfmiddlewaretoken: '{{ csrf_token }}'
-            })
-        }
-    </script>
+    
     {% if latest_posts_list %}
         <ul class="flex flex-col w-10/12 align-middle items-center justify-center">
         {% for post in latest_posts_list %} 
@@ -52,14 +19,14 @@
             <li class=" flex my-2 items-center bg-primary text-accent-darkest w-full h-full rounded-lg">
                 <!-- <form class="h-min w-8" id="vote" onc> -->
                 <div class="h-min w-8">
-                    <button class="p-1 rounded-tr-xl bg-slate-300 hover:bg-slate-400 active:bg-slate-500" id="up{{post.id}}" onclick=vote('up','post',{{post.id}})>
+                    <button class="p-1 rounded-tr-xl bg-slate-300 hover:bg-slate-400 active:bg-slate-500" id="up{{post.id}}" onclick=vote('up','post','{{post.id}}','{{csrf_token}}')>
                         {% if user in post.users_upvoted.all %}
                             ▲
                         {% else %}
                             △
                         {% endif %}
                     </button>
-                    <button class="p-1 rounded-bl-xl bg-slate-300 hover:bg-slate-400 active:bg-slate-500" id="down{{post.id}}" onclick=vote('down','post',{{post.id}})>
+                    <button class="p-1 rounded-bl-xl bg-slate-300 hover:bg-slate-400 active:bg-slate-500" id="down{{post.id}}" onclick=vote('down','post','{{post.id}}','{{csrf_token}}')>
                         {% if user in post.users_downvoted.all %}
                             ▼
                         {% else %}
@@ -84,6 +51,9 @@
     {% else %}
         <p> No posts are available</p>
     {% endif %}
+    <div class="flex content-center">
+        <a href="{% url 'blog:3d' %}">3D</a>
+    </div>
 {% endblock %}
 </body>
 </html>

@@ -29,6 +29,10 @@ def index(request):
     return render(request, 'blog/index.html', context)
 
 
+def three(request):
+    users = User.objects.all()
+    return render(request, 'blog/3d.html', {'users': users})
+
 class Login(LoginView):
     redirect_authenticated_user = True
     template_name = 'blog/login.html'
@@ -139,6 +143,7 @@ def post(request, pk):
 
 
 def comment(request, pk):
+    print(request)
     if not request.user.is_authenticated:
         return JsonResponse("fail", safe=False, status=200)
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':

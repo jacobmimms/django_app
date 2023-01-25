@@ -1,3 +1,4 @@
+{% load static %}
 {% load static tailwind_tags %}
 <!DOCTYPE html>
 <html lang="en" class="font-sans w-full max-w-full h-full h-max-full text-slate-700 bg-slate-200">
@@ -7,41 +8,19 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<meta http-equiv="X-UA-Compatible" content="ie=edge">
 		{% tailwind_css %}
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> 
+        <script src="{% static 'blog/app.js' %}"></script>
 	</head>
     
 	<body class="fixed flex flex-col w-full h-full justify-right align-middle">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> 
         <div id="header" class="sticky top-0 h-auto">
             {% block header %}
             {% include "blog/header.html" %}
             {% endblock %}
         </div>
-        <div id="main-content" class=" h-full overflow-scroll">
-            <script>
-                $('#main-content').scroll(function() { 
-                    if($('#main-content').scrollTop() === 0) {
-                        $("#header").show(200);
-                    }
-                });
-                var lastScrollTop = 0;
-                var last_time = Date.now();
-                $('#main-content').scroll(function() {
-                    var elapsed = Date.now() - last_time
-                    if (elapsed < 200) {
-                        return;
-                    }
-                    st = $(this).scrollTop();
-                    if(st-lastScrollTop > 70) {
-                        $('#header').hide(200, easing='linear');
-                    }
-                    else if (st-lastScrollTop < -70) {
-                        $('#header').show(200, easing='linear');
-                    }
-                    last_time = Date.now();
-                    lastScrollTop = st;
-                });
-            </script>
-            {% block content %}{% endblock %}       
+        <div id="main-content" class="h-full overflow-scroll">
+            {% block content %}
+            {% endblock %}       
         </div>
         
         <div id="footer h-full">

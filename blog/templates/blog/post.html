@@ -10,6 +10,7 @@
 </head>
 <body class="flex content-center">
     {% block content %}
+
     <div class="flex justify-center">  
         <div id="post-content" class="w-full flex flex-col justify-center bg-slate-400 p-2 rounded-t-lg content-center align-middle">
           
@@ -23,14 +24,14 @@
 
             <div class="w-full rounded-lg h-full flex my-2 items-center bg-slate-300 text-accent-darkest">
                 <div class="h-min w-8">
-                    <button class="p-1  border-r-2 border-t-2 border-slate-400 rounded-t-lg bg-slate-300 hover:bg-slate-400 active:bg-slate-500" id="up{{post.id}}" onclick=vote('up','post',{{post.id}})>
+                    <button class="p-1  border-r-2 border-t-2 border-slate-400 rounded-t-lg bg-slate-300 hover:bg-slate-400 active:bg-slate-500" id="up{{post.id}}" onclick=vote('up','post','{{post.id}}','{{csrf_token}}')>
                         {% if user in post.users_upvoted.all %}
                             ▲
                         {% else %}
                             △
                         {% endif %}
                     </button>
-                    <button class="p-1  border-r-2 border-b-2 border-slate-400 rounded-b-lg bg-slate-300 hover:bg-slate-400 active:bg-slate-500" id="down{{post.id}}" onclick=vote('down','post',{{post.id}})>
+                    <button class="p-1  border-r-2 border-b-2 border-slate-400 rounded-b-lg bg-slate-300 hover:bg-slate-400 active:bg-slate-500" id="down{{post.id}}" onclick=vote('down','post','{{post.id}}','{{csrf_token}}')>
                         {% if user in post.users_downvoted.all %}
                             ▼
                         {% else %}
@@ -52,105 +53,6 @@
             </div>
         </div>
     </div>
-
-
-    <script>
-        let ajax_reply = function (endpoint, request_parameters) {
-            $.post(endpoint, request_parameters)
-                .done(response => {
-                    if (response == "fail") {
-                        $('#login-warning').show()
-                        return
-                    }
-                    parent_id = request_parameters.parent_id
-                    $(`#comment${parent_id}-replies`).prepend(response.html)
-                    $(`#comment${parent_id}-replies`).removeClass("hidden")
-                    $(`#reply${parent_id}`).addClass("hidden")
-
-
-                })
-        }
-        let reply = function (post_id, parent_id) {
-            if ($(`#reply-text-area${parent_id}`).val().trim() == "" || $(`#reply-text-area${parent_id}`).val().trim() == null) {
-                $(`#reply-text-area${parent_id}`).val("")
-                return
-            }
-
-            var endpoint = "{% url 'blog:comment' 12345 %}".replace('/12345/', '/' + post_id + '/');
-            ajax_reply(endpoint, {
-                comment: $(`#reply-text-area${parent_id}`).val(),
-                post_id: post_id,
-                parent_id: parent_id,
-                is_reply: "true",
-                csrfmiddlewaretoken: '{{ csrf_token }}',
-            })
-            $(`#reply-text-area${parent_id}`).val("")
-        }
-        let ajax_comment = function (endpoint, request_parameters) {
-            $.post(endpoint, request_parameters)
-                .done(response => {
-                    if (response == "fail") {
-                        $('#login-warning').show()
-                        return
-                    }
-                    $("#comment-section").prepend(response)
-                })
-        }
-        let comment = function (parent_id) {
-            if ($(`#comment-text-area`).val().trim() == "" || $(`#comment-text-area`).val().trim() == null) {
-                $("#comment-text-area").val("")
-                return
-            }
-            ajax_comment("{% url 'blog:comment' post.id%}", {
-                comment: $(`#comment-text-area`).val(),
-                parent_id: parent_id,
-                post_id: parent_id,
-                is_reply: "false",
-                csrfmiddlewaretoken: '{{ csrf_token }}',
-            })
-            $("#comment-text-area").val("")
-        }
-        let ajax_vote = function (endpoint, request_parameters) {
-            const arrows = {active:{up:'▲', down:'▼'}, inactive:{up:'△', down:'▽'}}
-            $.post(endpoint, request_parameters)
-                .done(response => {
-                    if (response == false) {
-                        return
-                    }
-                    id = response.id
-                    element_id = `#${response.vote_type}${id}`
-                    other_id = response.vote_type == 'up' ? `#down${id}` : `#up${id}`
-                    vote_type = response.vote_type
-                    status = response.was_active ? "inactive" : "active"
-                    added_class = response.was_active ? 'bg-slate-300' : 'bg-slate-400'
-                    removed_class = response.was_active ? 'bg-slate-400' : 'bg-slate-300'
-                    $(element_id).html(arrows[status][vote_type])
-                    $(element_id).removeClass(removed_class)
-                    $(element_id).addClass(added_class)
-                    if (response.flip) {
-                        $(other_id).html(arrows.inactive[vote_type == 'up' ? 'down' : 'up'])
-                        $(other_id).removeClass(added_class)
-                        $(other_id).addClass(removed_class)
-                    }
-                    $(`#votes${id}`).html(response.votes)
-                })
-        }
-        let vote = (vote_type, obj_type, id) => {
-            ajax_vote("{% url 'blog:vote' %}", {
-                vote_type: vote_type,
-                obj_type: obj_type,
-                id: id,
-                csrfmiddlewaretoken: '{{ csrf_token }}'
-            })
-        }
-        let sort = (sort_type) => {
-            $("#comment-section").get(0).scrollIntoView()
-        }
-        $("body").on('DOMSubtreeModified', "#comment-section", function() {
-            $("#comment-count").html(`Comments (${$("#comment-section").children().length})`);
-        });
-        
-    </script>
     <section class="bg-slate-300 text-slate-700 sm:py-2 md:py-4">
         <div class="max-w-2xl mx-auto px-2">
             <div class="flex justify-between">
@@ -164,7 +66,7 @@
                     <label for="comment" class="sr-only">Your comment</label>
                     <textarea id="comment-text-area" name="comment" rows="2" class="px-0 w-full border-0 focus:ring-0 focus:outline-none bg-slate-200 placeholder-slate-700" placeholder="Write a comment..." required></textarea>
                 </div>
-                <button onclick=comment({{post.id}}) type="submit" value="comment" class="bg-slate-200 hover:bg-slate-400 rounded-xl p-2 shadow-sm shadow-slate-600 active:shadow-sm">
+                <button onclick=comment('{{post.id}}','{{csrf_token}}') type="submit" value="comment" class="bg-slate-200 hover:bg-slate-400 rounded-xl p-2 shadow-sm shadow-slate-600 active:shadow-sm">
                     Post comment
                 </button>
             </div>

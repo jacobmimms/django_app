@@ -1,0 +1,19 @@
+{% extends "blog/base.html" %}
+{% load static %}
+{% load static tailwind_tags %}
+<head>
+    <title>BrosCode Main Page</title>
+    {% tailwind_css %}
+</head>
+<body>
+	{% block content %}
+	<script src="{% static 'blog/three.js' %}"  ></script>
+	<script type="module"  src="{% static 'blog/orbitControls.js' %}"  ></script>
+	<script type="module" src="{% static 'blog/threeCode.js' %}" ></script>
+	<div id="canvas-container" class="w-1/2 h-1/2"></div>
+		<canvas id="canvas-3d">
+		</canvas>
+	</div>
+	{% endblock %}
+
+</body>
