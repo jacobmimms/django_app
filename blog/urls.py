@@ -6,6 +6,7 @@ app_name = "blog"
 urlpatterns = [
     path('', views.index, name='index'),
     path('3d/', views.three, name='3d'),
+    path('profile/<int:pk>/3d', views.three_profile, name='3d_profile'),
 
     path('login/', views.Login.as_view(template_name='blog/login.html'), name='login'),
     path('logout/', LogoutView.as_view(next_page='blog:index'), name='logout'),

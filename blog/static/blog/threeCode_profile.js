@@ -35,7 +35,7 @@ const sphereSize = 1;
 const pointLightHelper = new THREE.PointLightHelper( light, sphereSize );
 scene.add( pointLightHelper );
 
-scene.background = new THREE.Color(0x444444);
+scene.background = new THREE.Color(0x333333);
 
 function resizeCanvasToDisplaySize() {
 	const canvas = renderer.domElement;
@@ -67,6 +67,7 @@ function resizeCanvasToDisplaySize() {
 		// update position of camera to be on same vector as object
 		camera_data.position.x = object.position.x - (direction.x * 10);
 		camera_data.position.z = object.position.z - (direction.z * 10);
+		
 	}
 }
 
@@ -151,87 +152,28 @@ const handleMovement = function(inputs, controls) {
 	}
 }
 
-let profile_picture_urls = $("#profile-picture-urls").text().split(",").map(function(item) {
-	return item.trim();
-}).filter(function(item) {
-	return item.length > 0;
-})
-let profile_usernames = $("#profile-usernames").text().split(",").map(function(item) {
-	return item.trim();
-}).filter(function(item) {
-	return item.length > 0;
-})
-
-let profile_picutes = []
-for (let i = 0; i < profile_picture_urls.length; i++) {
-	let texture = new THREE.TextureLoader().load(profile_picture_urls[i]);
-	let material = new THREE.MeshBasicMaterial({map: texture});
-	let geometry = new THREE.BoxGeometry(10, 10, 10)
-	let mesh = new THREE.Mesh(geometry, material);
-	mesh.position.set(0, 5, 0);
-	mesh.translateX(i * 20);
-	scene.add(mesh);
-	profile_picutes.push(mesh);
-}
-
-
-
-const setTextDivs = function() {
-	for (let i = 0; i < profile_picutes.length; i++) {
-		let username = profile_usernames[i];
-		console.log(username)
-		let vector = new THREE.Vector3();
-		vector.setFromMatrixPosition(profile_picutes[i].matrixWorld);
-		vector.project(camera);
-		vector.x = (vector.x + 1) / 2 * window.innerWidth;
-		vector.y = -(vector.y - 1) / 2 * window.innerHeight;
-		//create div 
-		let div = document.createElement("div");
-		div.style.position = "absolute";
-		div.style.left = vector.x + "px";
-		div.style.top = vector.y + "px";
-		div.style.color = "white";
-		div.style.fontSize = "20px";
-		div.style.fontFamily = "Arial";
-		div.style.zIndex = "1";
-		div.innerHTML = username;
-		div.id = "username-" + i;
-		document.body.appendChild(div);
-	}
-}	
-setTextDivs()
-const updateTextDivs = function() {
-	for (let i = 0; i < profile_picutes.length; i++) {
-		let vector = new THREE.Vector3();
-		vector.setFromMatrixPosition(profile_picutes[i].matrixWorld);
-		vector.project(camera);
-		let div = document.getElementById("username-" + i);
-		// make text small if the object is far away 
-		let distance = camera_data.position.distanceTo(profile_picutes[i].position);
-		let size = 300 /  distance ;
-		div.style.fontSize =`${size}px`;
-		// make text invisible if the object is behind the camera
-		if (vector.z > 1) {
-			div.style.display = "none";
-			continue;
-		}
-		div.style.display = "block";
-		vector.x = (vector.x + 1) / 2 * window.innerWidth;
-		vector.y = -(vector.y - 1) / 2 * window.innerHeight;
-		div.style.left = vector.x + "px";
-		div.style.top = vector.y + "px";
-	}
-}
+let profile_picture_url = $(this).attr("profile_picture_url");
+let texture = new THREE.TextureLoader().load(profile_picture_url);
+let profile_material = new THREE.MeshBasicMaterial({map: texture});
+let profile_geometry = new THREE.BoxGeometry(10, 10, 10)
+let mesh = new THREE.Mesh(profile_geometry, profile_material);
+mesh.position.set(0, 5, 0);
+mesh.translateX(i * 20);
+scene.add(mesh);
+profile_picutes.push(mesh);
 
 
 let controls = {"w": moveForward, "s": moveBackward, "a": moveLeft, "d": moveRight, "q":moveUp, "e": moveDown,  "ArrowLeft": turnLeft, "ArrowRight":turnRight, "ArrowUp": turnUp, "ArrowDown": turnDown,  " ": jump}
 let inputs = {"w": false, "s": false, "a": false, "d":false, "q":false, "e":false, "ArrowLeft": false, "ArrowRight":false}
-
-let prev_time = Date.now()
+let start = Date.now()
+let prev_time = start
 let delta = Date.now() - prev_time;
 
-const updateCamera = function() {
-	delta = Date.now() - prev_time
+function animate() {
+	light.position.set(camera_data.position.x, camera_data.position.y + 10, camera_data.position.z);
+	resizeCanvasToDisplaySize();
+	delta = Date.now() - prev_time;
+	prev_time = Date.now();
 	handleMovement(inputs, controls);
 	handlePysics(delta / 1000)
 	camera.position.x = camera_data.position.x;
@@ -241,16 +183,8 @@ const updateCamera = function() {
 	camera.rotation.y = camera_data.rot.y;
 	camera.rotation.z = camera_data.rot.z;
 	camera.getWorldDirection(camera_data.direction)
-	prev_time = Date.now();
-}
-
-function animate() {
-	resizeCanvasToDisplaySize();
-	light.position.set(camera_data.position.x, camera_data.position.y + 10, camera_data.position.z);
-	updateCamera();
 	renderer.render( scene, camera );
 	requestAnimationFrame( animate );
-	updateTextDivs();
 }; 
 
 

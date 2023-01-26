@@ -31,7 +31,18 @@ def index(request):
 
 def three(request):
     users = User.objects.all()
-    return render(request, 'blog/3d.html', {'users': users})
+    posts = Post.objects.all()
+    user_to_posts = {}
+    for user in users:
+        user_to_posts[user] = [Post.objects.all().filter(author=user)]
+    print(user_to_posts)
+    return render(request, 'blog/3d.html', {'users': users, 'posts': posts, 'user_to_posts': user_to_posts})
+
+def three_profile(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    posts = Post.objects.filter(author=user)
+    comments = Comment.objects.filter(author=user)
+    return render(request, 'blog/3d_profile.html', {'user': user, 'posts': posts, 'comments': comments})
 
 class Login(LoginView):
     redirect_authenticated_user = True
