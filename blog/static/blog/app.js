@@ -11,7 +11,6 @@ function downvotePost(e){
     console.log("downvote")
 }
 
-
 let ajax_reply = function (endpoint, request_parameters) {
     $.post(endpoint, request_parameters)
         .done(response => {
@@ -125,6 +124,20 @@ $('#main-content').scroll(function() {
         $("#header").show(200);
     }
 });
+
+
+// $(window).resize(function() {
+//     width = $(window).width();
+//     height = $(window).height();
+//     if (width < 600) {
+//         $("#sidebar-left").hide(300);
+//     }
+//     if (width >= 600) {
+//         if (!$("#sidebar-left").is(":hidden")) {
+//             $("#sidebar-left").show(300);
+//         }
+//     }
+// });
 
 
 var lastScrollTop = 0;

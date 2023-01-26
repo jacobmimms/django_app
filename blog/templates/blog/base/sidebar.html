@@ -1,0 +1,14 @@
+{% load static tailwind_tags %}
+<!DOCTYPE html>
+<html lang="en">
+{% tailwind_css %}
+<body>
+    <div class="pt-2 h-full bg-slate-400 rounded-t{{direction|first}}-md justify-start">
+        <div class="mx-2 mb-1 p-1 bg-slate-500 rounded-lg text-slate-200 text-right hover:bg-slate-600 active:bg-slate-500"> 
+            <a href="{% url 'blog:new_post'%}">NEW POST</a>
+        </div>
+        <div class="mx-2 mt-1 mb-1 p-1 bg-slate-500 rounded-lg text-slate-200 text-right hover:bg-slate-600 active:bg-slate-500"> 
+            <a class="w-[100%] block" href="{% url 'blog:3d' %}">3D</a>
+        </div>
+    </div>
+</body>

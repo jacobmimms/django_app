@@ -1,4 +1,4 @@
-{% extends "blog/base.html" %}
+{% extends "blog/base/base.html" %}
 {% load static %}
 {% load static tailwind_tags %}
 <head>
@@ -7,6 +7,9 @@
 </head>
 <body>
 	{% block content %}
+	<script>
+		$("#sidebar-left").addClass("hidden");
+	</script>
 	<div id="allPosts" class="hidden absolute">
 		<div id="profile-picture-urls" class="hidden absolute"> 
 			{% for user, posts_ in user_to_posts.items %}

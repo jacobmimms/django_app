@@ -36,17 +36,17 @@ def three(request):
     for user in users:
         user_to_posts[user] = [Post.objects.all().filter(author=user)]
     print(user_to_posts)
-    return render(request, 'blog/3d.html', {'users': users, 'posts': posts, 'user_to_posts': user_to_posts})
+    return render(request, 'blog/3d/3d.html', {'users': users, 'posts': posts, 'user_to_posts': user_to_posts})
 
 def three_profile(request, pk):
     user = get_object_or_404(User, pk=pk)
     posts = Post.objects.filter(author=user)
     comments = Comment.objects.filter(author=user)
-    return render(request, 'blog/3d_profile.html', {'user': user, 'posts': posts, 'comments': comments})
+    return render(request, 'blog/3d/3d_profile.html', {'user': user, 'posts': posts, 'comments': comments})
 
 class Login(LoginView):
     redirect_authenticated_user = True
-    template_name = 'blog/login.html'
+    template_name = 'blog/auth/login.html'
 
     def get_success_url(self):
         return reverse_lazy('blog:index') 
@@ -98,7 +98,7 @@ def register(req):
         if form.is_valid():
             if form.duplicate_email():
                 messages.error(req, "Unsuccessful registration. Email already exists.")
-                return render(req, 'blog/register.html', {'email_error': 'Email already exists', 'form': form})
+                return render(req, 'blog/auth/register.html', {'email_error': 'Email already exists', 'form': form})
             
             user = User.objects.create_user(
                 username=form.cleaned_data['username'],
@@ -111,7 +111,7 @@ def register(req):
         messages.error(req, "Unsuccessful registration. Invalid information.")
     else:
         form = NewUserForm()
-    return render(req, 'blog/register.html', {'form': form})
+    return render(req, 'blog/auth/register.html', {'form': form})
 
 
 def new_post(request):
