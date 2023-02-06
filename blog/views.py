@@ -1,24 +1,23 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponseRedirect
-from django.contrib.auth import login, logout
-from django.contrib.auth.models import User
-from django.views import generic
-from django.urls import reverse
-from django.contrib.auth.views import LoginView  
-from django.contrib.auth.forms import (
-    PasswordChangeForm
-)
-from .forms import NewUserForm, PostForm, ProfilePictureForm
-from .models import  Post, Comment, User
-from django.urls import reverse_lazy
+from django.http import HttpResponseRedirect, JsonResponse
 from django.contrib import messages
-from django.http import JsonResponse
+from django.contrib.auth import login, logout
+from django.contrib.auth.views import LoginView  
+from django.contrib.auth.forms import PasswordChangeForm
+from django.views import generic
+from django.views.generic import CreateView, TemplateView, RedirectView
+from django.urls import reverse, reverse_lazy
 from django.template.loader import render_to_string
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_str # force_text on older versions of Django
+from .forms import PostForm, ProfilePictureForm, SignUpForm, token_generator, user_model
+from .models import  Post, Comment, User
 
 modelDict = dict(
     post=Post,
     comment=Comment
 )
+
 
 def index(request):
     latest_posts_list = Post.objects.order_by('-created_at')[:5]
@@ -38,11 +37,13 @@ def three(request):
     print(user_to_posts)
     return render(request, 'blog/3d/3d.html', {'users': users, 'posts': posts, 'user_to_posts': user_to_posts})
 
+
 def three_profile(request, pk):
     user = get_object_or_404(User, pk=pk)
     posts = Post.objects.filter(author=user)
     comments = Comment.objects.filter(author=user)
     return render(request, 'blog/3d/3d_profile.html', {'user': user, 'posts': posts, 'comments': comments})
+
 
 class Login(LoginView):
     redirect_authenticated_user = True
@@ -92,26 +93,63 @@ def profile(req, pk):
     return render(req, 'blog/profile.html', {'user': user, 'posts': posts, 'comments': comments, 'form': form})
 
 
-def register(req):
-    if req.method == "POST":
-        form = NewUserForm(req.POST)
-        if form.is_valid():
-            if form.duplicate_email():
-                messages.error(req, "Unsuccessful registration. Email already exists.")
-                return render(req, 'blog/auth/register.html', {'email_error': 'Email already exists', 'form': form})
-            
-            user = User.objects.create_user(
-                username=form.cleaned_data['username'],
-                email=form.cleaned_data['email'],
-                password=form.cleaned_data['password1'],
-            )
+
+class SignUpView(CreateView):
+    form_class = SignUpForm 
+    template_name = 'blog/auth/signup.html'
+    success_url = reverse_lazy('blog:check_email')
+    def form_valid(self, form):
+        to_return = super().form_valid(form)
+        user = form.save()
+        user.is_active = False # Turns the user status to inactive
+        user.save()
+        form.send_activation_email(self.request, user)
+        return to_return
+
+
+class ActivateView(RedirectView):
+    url = reverse_lazy('success')
+    def get(self, request, uidb64, token):
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = user_model.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, user_model.DoesNotExist):
+            user = None
+
+        if user is not None and token_generator.check_token(user, token):
+            user.is_active = True
             user.save()
-            login(req, user)
-            return redirect('blog:index')
-        messages.error(req, "Unsuccessful registration. Invalid information.")
-    else:
-        form = NewUserForm()
-    return render(req, 'blog/auth/register.html', {'form': form})
+            login(request, user)
+            return super().get(request, uidb64, token)
+        else:
+            return render(request, 'blog/auth/activate_account_invalid.html')
+
+class CheckEmailView(TemplateView):
+    template_name = 'blog/auth/check_email.html'
+
+class SuccessView(TemplateView):
+    template_name = 'blog/auth/success.html'
+
+# def register(req):
+#     if req.method == "POST":
+#         form = NewUserForm(req.POST)
+#         if form.is_valid():
+#             if form.duplicate_email():
+#                 messages.error(req, "Unsuccessful registration. Email already exists.")
+#                 return render(req, 'blog/auth/register.html', {'email_error': 'Email already exists', 'form': form})
+            
+#             user = User.objects.create_user(
+#                 username=form.cleaned_data['username'],
+#                 email=form.cleaned_data['email'],
+#                 password=form.cleaned_data['password1'],
+#             )
+#             user.save()
+#             login(req, user)
+#             return redirect('blog:index')
+#         messages.error(req, "Unsuccessful registration. Invalid information.")
+#     else:
+#         form = NewUserForm()
+#     return render(req, 'blog/auth/register.html', {'form': form})
 
 
 def new_post(request):

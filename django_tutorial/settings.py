@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 from pathlib import Path
 import os
+import environ
+env = environ.Env()
+environ.Env.read_env() 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -155,8 +158,21 @@ TEMPLATES = [
 ]
 
 LOGIN_URL = 'blog/login'
+
+
+# Bottom of settings.py 
+# Twilio SendGrid
+EMAIL_HOST = 'smtp.sendgrid.net'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'apikey'
+EMAIL_HOST_PASSWORD = env('SENDGRID_API_KEY')
+DEFAULT_FROM_EMAIL = env('FROM_EMAIL', default='noreply@gmail.com')
+LOGIN_REDIRECT_URL = 'success'
+
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 EMAIL_FILE_PATH = BASE_DIR / "sent_emails"
+
 AUTH_USER_MODEL = 'blog.User'
 TAILWIND_APP_NAME = 'theme'
 

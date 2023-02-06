@@ -2,12 +2,18 @@ from django.db import models
 from django.utils import timezone
 from django.contrib import admin
 from django.contrib.auth.models import User, AbstractUser
+from django.core.mail import send_mail
 
 class User(AbstractUser):
     email = models.EmailField(max_length=254, unique=True, blank=False, null=False)
     friends = models.ManyToManyField('self', blank=True)
     profile_picture = models.ImageField(upload_to='images/', default='images/default.jpg', blank=True, null=True)
 
+
+    def email_user(self, subject, message, from_email=None, **kwargs):
+        """Send an email to this user."""
+        send_mail(subject, message, from_email, [self.email], **kwargs)
+    
     def __str__(self):
         return self.username
 
