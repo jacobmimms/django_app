@@ -68,7 +68,7 @@ class Logout(generic.RedirectView):
 
 class ChangePassword(generic.FormView):
     form_class = PasswordChangeForm
-    success_url = reverse_lazy('blog/login')
+    success_url = reverse_lazy('blog:login')
     template_name = 'change_password.html'
 
     def form_valid(self, form):
@@ -108,7 +108,7 @@ class SignUpView(CreateView):
 
 
 class ActivateView(RedirectView):
-    url = reverse_lazy('success')
+    url = reverse_lazy('blog:success')
     def get(self, request, uidb64, token):
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))

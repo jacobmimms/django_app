@@ -14,6 +14,7 @@ import os
 import environ
 env = environ.Env()
 environ.Env.read_env() 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -157,20 +158,17 @@ TEMPLATES = [
     },
 ]
 
+
+
 LOGIN_URL = 'blog/login'
 
-
-# Bottom of settings.py 
-# Twilio SendGrid
 EMAIL_HOST = 'smtp.sendgrid.net'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'apikey'
+EMAIL_HOST_USER = 'apikey' # Name for all the SenGrid accounts
 EMAIL_HOST_PASSWORD = env('SENDGRID_API_KEY')
-DEFAULT_FROM_EMAIL = env('FROM_EMAIL', default='noreply@gmail.com')
+DEFAULT_FROM_EMAIL = env('FROM_EMAIL', default='jacobmimms+1@gmail.com')
 LOGIN_REDIRECT_URL = 'success'
-
-EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 EMAIL_FILE_PATH = BASE_DIR / "sent_emails"
 
 AUTH_USER_MODEL = 'blog.User'
