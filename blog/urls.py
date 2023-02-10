@@ -4,6 +4,11 @@ from django.contrib.auth.views import LogoutView, PasswordChangeView
 app_name = "blog"
 urlpatterns = [
     path('', views.index, name='index'),
+    path('spotify/', views.Spotify.as_view(), name='Spotify'),
+    path('spotify/login/', views.SpotifyLogin.as_view(), name='spotify_login'),
+    path('spotify/redirect/', views.SpotifyCallback.as_view(), name='spotify_redirect'),
+
+
     path('3d/', views.three, name='3d'),
     path('profile/<int:pk>/3d', views.three_profile, name='3d_profile'),
     path('signup/', views.SignUpView.as_view(), name="signup"),

@@ -1,27 +1,31 @@
 {% extends "blog/base/base.html" %}
 {% load static tailwind_tags %}
-
-<!DOCTYPE html>
-<html lang="en">
-	<head>
-    <title>Home</title>
-		{% tailwind_css %}
-	</head>
-	<body>
-        {% block content %}
-
-        <form method = "post" enctype="multipart/form-data">
+{% block content %}
+<div id="profile-page-container" class="flex flex-col justify-start h-full w-full p-2 shadow-inner shadow-slate-700 rounded-md">
+    {% if user.profile_picture %}
+        <div class="flex flex-row justify-around bg-slate-300 p-2 rounded-md">
+            <img src="{{ user.profile_picture.url }}" alt="profile picture" class="w-20 h-20 rounded-3xl border-slate-400 border-2">
+            <div class="flex flex-col justify-between align-middle  bg-slate-200 p-2 ml-4 pl-4 rounded-md">
+                <span>{{user.username}}</span>
+                <span>{{user.email}}</span>
+            </div>
+            <div>
+                <a href="{% url 'blog:3d_profile' user.pk %}">3d Profile</a>    
+            </div>
+        </div>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="p-1 border-slate-400 rounded-lg bg-slate-400 hover:bg-slate-500 active:bg-slate-600">Change Profile Picture</button>
+        </form>
+    {% else %}
+        <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             {{ form.as_p }}
             <button type="submit">Upload</button>
         </form>
-
-        <a href="{% url 'blog:3d_profile' user.pk %}">3d Profile</a>
-
-        
-        
-        {% endblock %}
-    </body>
-</html>
+    {% endif %}
+</div>
+{% endblock %}
 
 

@@ -5,13 +5,19 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.views import LoginView  
 from django.contrib.auth.forms import PasswordChangeForm
 from django.views import generic
-from django.views.generic import CreateView, TemplateView, RedirectView
+from django.views.generic import CreateView, TemplateView, RedirectView, View
 from django.urls import reverse, reverse_lazy
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str # force_text on older versions of Django
 from .forms import PostForm, ProfilePictureForm, SignUpForm, token_generator, user_model
 from .models import  Post, Comment, User
+from pathlib import Path
+import requests
+import os
+import environ
+env = environ.Env()
+environ.Env.read_env() 
 
 modelDict = dict(
     post=Post,
@@ -93,6 +99,91 @@ def profile(req, pk):
     return render(req, 'blog/profile.html', {'user': user, 'posts': posts, 'comments': comments, 'form': form})
 
 
+class Spotify(View):
+    api_url = 'https://api.spotify.com/v1/'
+
+    def get(self, req):
+        if not req.user.is_authenticated:
+            return HttpResponseRedirect(reverse('blog:login'))
+        if not req.user.spotify_access_token:
+            return HttpResponseRedirect(reverse('blog:spotify_login'))
+        # make query for user's top artists
+        # make query for user's top tracks
+        # make query for user's top genres
+        context = {}
+        top_artists = 'me/top/artists?time_range=medium_term&limit=100'
+        top_tracks = 'me/top/tracks?time_range=medium_term&limit=100'
+        # make query for user's top artists
+        top = requests.get(self.api_url + top_artists, headers={'Authorization': 'Bearer ' + req.user.spotify_access_token})
+        if top.status_code == 401:
+            return HttpResponseRedirect(reverse('blog:spotify_login'))
+        top_tracks = requests.get(self.api_url + top_tracks, headers={'Authorization': 'Bearer ' + req.user.spotify_access_token})
+        top = top.json()
+        top_artists = []
+        for artist in top['items']:
+            top_artists.append(artist['name'])
+
+        top_tracks_json = top_tracks.json()
+        top_tracks = []
+        for track in top_tracks_json['items']:
+            track_info = {}
+            track_info['name'] = track['name']
+            track_info['artist'] = track['artists'][0]['name']
+            track_info['album_art'] = track['album']['images'][0]['url']
+            top_tracks.append(track_info)
+        
+        context['top_artists'] = top_artists
+        context['top_tracks'] = top_tracks
+        return render(req, 'blog/spotify.html', context)
+
+            
+class SpotifyLogin(RedirectView):
+    scope = 'user-read-private user-read-email user-read-playback-state user-modify-playback-state user-read-currently-playing user-read-recently-played user-top-read playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public user-read-playback-position user-top-read user-read-recently-played user-library-modify user-library-read app-remote-control streaming'
+    url = 'https://accounts.spotify.com/authorize?client_id={}&response_type=code&redirect_uri={}&scope={}'.format(
+        env('SPOTIFY_CLIENT_ID'),
+        env('SPOTIFY_REDIRECT_URI'),
+        scope
+    )
+
+    def get(self, req):
+        if not req.user.is_authenticated:
+            return HttpResponseRedirect(reverse('blog:login'))
+        return super().get(req)
+
+
+
+class SpotifyCallback(RedirectView):
+    # get access token
+    # save access token to user
+    # redirect to spotify page
+    url = reverse_lazy('blog:Spotify')
+    def get(self, req):
+        # save access token to user
+        if not req.user.is_authenticated:
+            return HttpResponseRedirect(reverse('blog:login'))
+        code = req.GET.get('code')
+        if code:
+            data = {
+                'grant_type': 'authorization_code',
+                'code': code,
+                'redirect_uri': env('SPOTIFY_REDIRECT_URI'),
+                'client_id': env('SPOTIFY_CLIENT_ID'),
+                'client_secret': env('SPOTIFY_CLIENT_SECRET')
+            }
+            r = requests.post('https://accounts.spotify.com/api/token', data=data)
+            if r.status_code == 200:
+                req.user.spotify_access_token = r.json().get('access_token')
+                req.user.spotify_refresh_token = r.json().get('refresh_token')
+                req.user.save()
+                return super().get(req)
+
+
+
+
+class SpotifyProfile(View):
+    def get(self, req):
+        return render(req, 'blog/spotify.html')
+
 
 class SignUpView(CreateView):
     form_class = SignUpForm 
@@ -115,7 +206,6 @@ class ActivateView(RedirectView):
             user = user_model.objects.get(pk=uid)
         except (TypeError, ValueError, OverflowError, user_model.DoesNotExist):
             user = None
-
         if user is not None and token_generator.check_token(user, token):
             user.is_active = True
             user.save()
@@ -129,27 +219,6 @@ class CheckEmailView(TemplateView):
 
 class SuccessView(TemplateView):
     template_name = 'blog/auth/success.html'
-
-# def register(req):
-#     if req.method == "POST":
-#         form = NewUserForm(req.POST)
-#         if form.is_valid():
-#             if form.duplicate_email():
-#                 messages.error(req, "Unsuccessful registration. Email already exists.")
-#                 return render(req, 'blog/auth/register.html', {'email_error': 'Email already exists', 'form': form})
-            
-#             user = User.objects.create_user(
-#                 username=form.cleaned_data['username'],
-#                 email=form.cleaned_data['email'],
-#                 password=form.cleaned_data['password1'],
-#             )
-#             user.save()
-#             login(req, user)
-#             return redirect('blog:index')
-#         messages.error(req, "Unsuccessful registration. Invalid information.")
-#     else:
-#         form = NewUserForm()
-#     return render(req, 'blog/auth/register.html', {'form': form})
 
 
 def new_post(request):
@@ -192,7 +261,6 @@ def post(request, pk):
 
 
 def comment(request, pk):
-    print(request)
     if not request.user.is_authenticated:
         return JsonResponse("fail", safe=False, status=200)
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':

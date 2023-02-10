@@ -11,10 +11,10 @@ module.exports = {
         '../../templates/**/*.html',
         '../../**/templates/**/*.html',
         /* JS 1: Ignore any JavaScript in node_modules folder. */
-        // '!../../**/node_modules',
+        '!../../**/node_modules',
         /* JS 2: Process all JavaScript files in the project. */
-        // '../../**/*.js',
-        // '../../**/*.py'
+        '../../**/*.js',
+        '../../**/*.py',
     ],
     plugins: [
         /**

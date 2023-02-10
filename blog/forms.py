@@ -10,9 +10,12 @@ from .token import token_generator
 from django.conf import settings
 
 class ProfilePictureForm(forms.ModelForm):
-    class Meta:
-        model = User
-        fields = ['profile_picture']
+	class Meta:
+		model = User
+		fields = ['profile_picture']
+		labels = {
+			'profile_picture': '',
+		}
 		
 user_model = get_user_model()
 class SignUpForm(UserCreationForm):
@@ -43,8 +46,16 @@ class SignUpForm(UserCreationForm):
 
 
 
-
 class PostForm(forms.ModelForm):
 	class Meta:
 		model = Post
 		fields = ['title', 'content']
+		# set default values of the title and content fields
+		widgets = {
+			'title': forms.TextInput(attrs={'class': 'form-control outline-slate-400', 'placeholder': 'Title'}),
+			'content': forms.Textarea(attrs={'class': 'form-control outline-slate-400', 'placeholder': 'Content'}),
+		}
+		labels = {
+			'title': '',
+			'content': '',
+		}

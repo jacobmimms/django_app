@@ -1,0 +1,27 @@
+{% extends "blog/base/base.html" %}
+{% load static tailwind_tags %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div>
+    <h1> Spotify Page </h1>
+    <div  class ="flex flex-row justify-around">
+
+        <div class = "flex flex-col justify-between">
+            {% for track_info in top_tracks %}
+                <div id='song-card' class='w-[50%] flex justify-left content-center bg-slate-400 text-slate-800 p-2 m-2 rounded-full'> 
+                    <img src={{track_info.album_art}} alt="track image" class="w-[20%] h-[100%] rounded-l-full ">
+                    <div class='flex flex-col h-full w-full content-around justify-center bg-slate-300 rounded-r-full'>
+                        <span class='rounded-t-full h-[50%] px-4 text-center text-sm overflow-auto'> {{track_info.name}} </span>
+                        <span class='rounded-b-full h-[50%] px-4 text-center text-sm overflow-auto'> {{track_info.artist}} </span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="flex flex-col justify-between">
+            {% for artist in top_artists %}
+                <span> {{artist}} </span>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

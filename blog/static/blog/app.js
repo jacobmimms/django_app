@@ -54,6 +54,9 @@ let ajax_comment = function (post_id, request_parameters) {
                 return
             }
             $("#comment-section").prepend(response)
+            newCount = parseInt($("#comment-count").attr("value")) + 1
+            $("#comment-count").attr("value", newCount)
+            $("#comment-count").text(`Comments (${newCount})`)
         })
 }
 let comment = function (parent_id, csrf_token) {
@@ -124,20 +127,6 @@ $('#main-content').scroll(function() {
         $("#header").show(200);
     }
 });
-
-
-// $(window).resize(function() {
-//     width = $(window).width();
-//     height = $(window).height();
-//     if (width < 600) {
-//         $("#sidebar-left").hide(300);
-//     }
-//     if (width >= 600) {
-//         if (!$("#sidebar-left").is(":hidden")) {
-//             $("#sidebar-left").show(300);
-//         }
-//     }
-// });
 
 
 var lastScrollTop = 0;

@@ -20,18 +20,15 @@
 
         <div class="flex flex-row h-full w-full">
             <div id="sidebar-left" class="drag h-full w-[20%]">
-                {% include "blog/base/sidebar.html" with direction="right" %}
+                {% include "blog/base/sidebar.html" %}
             </div>
             <div id="main-content" class="h-full w-full overflow-scroll">
                 {% block content %}
                 {% endblock %}       
             </div>
-            <div id="sidebar-right" class="drag hidden h-full w-[20]">
-                {% include "blog/base/sidebar.html" with direction="left" %}
-            </div>
         </div>
             
-        <div id="footer h-full">
+        <div id="footer" class="sticky bottom-0 w-full">
             {% include "blog/base/footer.html" %}
         </div>
 
