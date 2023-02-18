@@ -1,9 +1,16 @@
+// (async () => {
+// 	const { Player } = await waitForSpotifyWebPlaybackSDKToLoad();
+// 	console.log("The Web Playback SDK has loaded.");
+//     console.log(window.Spotify)
+//   })();
+
+
+
 function upvotePost(e){
     e.preventDefault()
     console.log(e)
     console.log("upvote")
 }
-
 
 function downvotePost(e){
     e.preventDefault()
@@ -24,7 +31,6 @@ let ajax_reply = function (endpoint, request_parameters) {
             $(`#reply${parent_id}`).addClass("hidden")
         })
 }
-
 
 let reply = function (post_id, parent_id, csrf_token) {
     if ($(`#reply-text-area${parent_id}`).val().trim() == "" || $(`#reply-text-area${parent_id}`).val().trim() == null) {
@@ -129,6 +135,7 @@ $('#main-content').scroll(function() {
 });
 
 
+
 var lastScrollTop = 0;
 var last_time = Date.now();
 $('#main-content').scroll(function() {
@@ -146,3 +153,75 @@ $('#main-content').scroll(function() {
     last_time = Date.now();
     lastScrollTop = st;
 });
+
+
+async function waitForSpotifyWebPlaybackSDKToLoad (access_token, failure_url) {
+    // get the spotify access token from the hidden input
+    return new Promise(resolve => {
+      if (window.Spotify) {
+        resolve(window.Spotify);
+      } else {
+        window.onSpotifyWebPlaybackSDKReady = () => {
+            console.log("Spotify SDK starting", access_token)
+            const token = access_token;
+            const player = new Spotify.Player({
+                name: 'Bros Code',
+                getOAuthToken: cb => { cb(token); },
+                volume: 0.5
+            });
+            // Ready
+            player.addListener('ready', ({ device_id }) => {
+                console.log('Ready with Device ID', device_id);
+            });
+        
+            // Not Ready
+            player.addListener('not_ready', ({ device_id }) => {
+                console.log('Device ID has gone offline', device_id);
+            });
+        
+            player.addListener('initialization_error', ({ message }) => {
+                console.error(message);
+            });
+        
+            player.addListener('authentication_error', ({ message }) => {
+                console.error(message);
+                console.log("Redirecting to failure url")
+                window.location.replace(failure_url)
+            });
+        
+            player.addListener('account_error', ({ message }) => {
+                console.error(message);
+            });
+            player.connect();
+            window.player = player;
+            resolve(window.Spotify);
+        }
+      }
+    });
+  };
+  
+
+async function getPlaybackState() {   
+    return new Promise(resolve => 
+        {
+            if (window.player) {
+                let current_state = window.player.getCurrentState()
+                resolve(current_state)
+            } else {
+                resolve("User is not playing music through the Web Playback SDK")
+            }
+        }
+    )
+}
+
+function nextSong() {
+    if (window.player) {
+        window.player.nextTrack();
+    } else {
+        return "User is not playing music through the Web Playback SDK"
+    }
+}
+
+function togglePlay() {
+    window.player.togglePlay();
+}

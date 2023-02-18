@@ -1,0 +1,16 @@
+{% extends "blog/base/base.html" %}
+{% load static tailwind_tags %}
+{% load crispy_forms_tags %}
+{% load custom_tags %}
+{% block content %}
+<div class="flex flex-col w-full h-full bg-no-repeat bg-center items-center justify-center" style='background-image: url({{album_art_url}}'>
+    <span class='bg-slate-200 bg-opacity-50 rounded-full p-2 text-center relative bottom-10 text-5xl'> {{ song }} </span>
+    <span class='bg-slate-200 bg-opacity-50 rounded-full p-2 text-center text-3xl'> {{ artist }} </span>
+
+</div>
+<div id='song-details' class='ml-2 flex flex-col bg-blue-50 bg-opacity-70'>
+    {% for k, v in song_info.items %}
+        <span>{{ k }}: {{ v }}</span>
+    {% endfor %}
+    </div>
+{% endblock %}

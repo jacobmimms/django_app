@@ -1,7 +1,7 @@
 {% load static %}
 {% load static tailwind_tags %}
 <!DOCTYPE html>
-<html lang="en" class="font-sans w-full max-w-full h-full h-max-full text-slate-700 bg-slate-200">
+<html lang="en" class="font-sans text-slate-700 bg-slate-200">
 	<head>
     <title>BrosCode</title>
 		<meta charset="UTF-8">
@@ -10,16 +10,16 @@
 		{% tailwind_css %}
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> 
         <script   src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"   integrity="sha256-eTyxS0rkjpLEo16uXTS0uVCS4815lc40K2iVpWDvdSY="   crossorigin="anonymous"></script>
-        <script src="{% static 'blog/app.js' %}"></script>
+        <script  src="{% static 'blog/app.js' %}"></script>
 	</head>
     
 	<body class="fixed flex flex-col w-full h-full justify-right align-middle">
         <div id="header" class="sticky top-0 h-auto">
-            {% include "blog/base/header.html" %}
+            {% include "blog/base/header.html"%}
         </div>
 
         <div class="flex flex-row h-full w-full">
-            <div id="sidebar-left" class="drag h-full w-[20%]">
+            <div id="sidebar" class="h-full w-[20%]">
                 {% include "blog/base/sidebar.html" %}
             </div>
             <div id="main-content" class="h-full w-full overflow-scroll">

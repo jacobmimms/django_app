@@ -1,13 +1,6 @@
 {% extends "blog/base/base.html" %}
 {% load static tailwind_tags %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>BrosCode Main Page</title>
-    {% tailwind_css %}
-</head>
-<body>
     {% block content %}
 
     <div id="postList" class="flex flex-col w-full align-middle items-center justify-center">
@@ -50,5 +43,3 @@
         <p> No posts are available</p>
     {% endif %}
 {% endblock %}
-</body>
-</html>

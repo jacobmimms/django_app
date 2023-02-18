@@ -6,6 +6,10 @@
  */
 const colors = require("tailwindcss/colors");
 module.exports = {
+    mode: 'jit',
+    safelist: [
+        'bg'
+      ],
     content: [
         '../templates/**/*.html',
         '../../templates/**/*.html',

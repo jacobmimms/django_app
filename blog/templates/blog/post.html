@@ -2,84 +2,72 @@
 {% load static tailwind_tags %}
 {% load crispy_forms_tags %}
 {% load custom_tags %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<title>Home</title>
-    {% tailwind_css %}
-</head>
-<body class="flex content-center">
-    {% block content %}
+{% block content %}
 
-    <div class="flex justify-center">  
-        <div id="post-content" class="w-full flex flex-col justify-center bg-slate-400 p-2 rounded-t-lg content-center align-middle">
-          
-            <div class="flex flex-row justify-between align-middle text-center content-center"> 
-                <a href="{% url 'blog:profile' post.author.pk %}" class="rounded-lg hover:bg-slate-500 hover:text-slate-200 p-1">
-                    {{post.author.username}}</a>
-                <span class="p-1">
-                    {{post.created_at}}
-                </span>
-            </div>
-
-            <div class="w-full rounded-lg h-full flex my-2 items-center bg-slate-300 text-accent-darkest">
-                <div class="h-min w-8">
-                    <button class="p-1  border-r-2 border-t-2 border-slate-400 rounded-t-lg bg-slate-300 hover:bg-slate-400 active:bg-slate-500" id="up{{post.id}}" onclick=vote('up','post','{{post.id}}','{{csrf_token}}')>
-                        {% if user in post.users_upvoted.all %}
-                            ▲
-                        {% else %}
-                            △
-                        {% endif %}
-                    </button>
-                    <button class="p-1  border-r-2 border-b-2 border-slate-400 rounded-b-lg bg-slate-300 hover:bg-slate-400 active:bg-slate-500" id="down{{post.id}}" onclick=vote('down','post','{{post.id}}','{{csrf_token}}')>
-                        {% if user in post.users_downvoted.all %}
-                            ▼
-                        {% else %}
-                            ▽
-                        {% endif %}
-                    </button>
-                </div>
-                <div class="flex align-middle">
-                    <div class="flex flex-col ml-4 w-4 justify-center " id="votes{{post.id}}"> 
-                        {{post.votes}}
-                    </div>
-                    <span class=" hover:bg-slate-300 rounded-full m-2 p-2">
-                        {{ post.title | upper }}
-                    </span>
-                </div>
-            </div>
-            <div class="p-4 bg-slate-300 rounded-lg">
-                {{post.content}}
-            </div>
+<div class="flex justify-center">  
+    <div id="post-content" class="w-full flex flex-col justify-center bg-slate-400 p-2 rounded-t-lg content-center align-middle">
+        
+        <div class="flex flex-row justify-between align-middle text-center content-center"> 
+            <a href="{% url 'blog:profile' post.author.pk %}" class="rounded-lg hover:bg-slate-500 hover:text-slate-200 p-1">
+                {{post.author.username}}</a>
+            <span class="p-1">
+                {{post.created_at}}
+            </span>
         </div>
-    </div>
-    <section class="bg-slate-300 text-slate-700 sm:py-2 md:py-4 overflow-scroll">
-        <div class="max-w-2xl mx-auto px-2">
-            <div class="flex justify-between">
-                <h2 id="comment-count" class="text-md lg:text-lg font-bold p-2" value='{{comments.count}}'>Comments  ({{comments.count}})</h2>
-                <h3 class="text-md lg:text-lg font-bold p-2">Sort by: <a class="hover:cursor-pointer" onclick=sort("votes")>Votes</a> | <a  class="hover:cursor-pointer" onclick=sort("created_at")>Date</a></h3>
-            </div>
 
-            <div class="mb-4" id="fake-form">
-                {% csrf_token %}
-                <div class="py-2 px-4 mb-2 rounded-lg rounded-t-lg border bg-slate-200 border-slate-300 shadow-sm shadow-slate-400">
-                    <label for="comment" class="sr-only">Your comment</label>
-                    <textarea id="comment-text-area" name="comment" rows="2" class="px-0 w-full border-0 focus:ring-0 focus:outline-slate-400 bg-slate-200 placeholder-slate-700" placeholder="Write a comment..." required></textarea>
-                </div>
-                <button onclick=comment('{{post.id}}','{{csrf_token}}') type="submit" value="comment" class="bg-slate-200 hover:bg-slate-400 rounded-xl p-2 shadow-sm shadow-slate-600 active:shadow-sm">
-                    Comment 
+        <div class="w-full rounded-lg h-full flex my-2 items-center bg-slate-300 text-accent-darkest">
+            <div class="h-min w-8">
+                <button class="p-1  border-r-2 border-t-2 border-slate-400 rounded-t-lg bg-slate-300 hover:bg-slate-400 active:bg-slate-500" id="up{{post.id}}" onclick=vote('up','post','{{post.id}}','{{csrf_token}}')>
+                    {% if user in post.users_upvoted.all %}
+                        ▲
+                    {% else %}
+                        △
+                    {% endif %}
+                </button>
+                <button class="p-1  border-r-2 border-b-2 border-slate-400 rounded-b-lg bg-slate-300 hover:bg-slate-400 active:bg-slate-500" id="down{{post.id}}" onclick=vote('down','post','{{post.id}}','{{csrf_token}}')>
+                    {% if user in post.users_downvoted.all %}
+                        ▼
+                    {% else %}
+                        ▽
+                    {% endif %}
                 </button>
             </div>
-
-            <div id="comment-section">
-                {% include "blog/comment_list.html" %}
+            <div class="flex align-middle">
+                <div class="flex flex-col ml-4 w-4 justify-center " id="votes{{post.id}}"> 
+                    {{post.votes}}
+                </div>
+                <span class=" hover:bg-slate-300 rounded-full m-2 p-2">
+                    {{ post.title | upper }}
+                </span>
             </div>
-     
         </div>
-      </section>
-    {% endblock %}
+        <div class="p-4 bg-slate-300 rounded-lg">
+            {{post.content}}
+        </div>
+    </div>
+</div>
+<section class="bg-slate-300 text-slate-700 sm:py-2 md:py-4 overflow-scroll">
+    <div class="max-w-2xl mx-auto px-2">
+        <div class="flex justify-between">
+            <h2 id="comment-count" class="text-md lg:text-lg font-bold p-2" value='{{comments.count}}'>Comments  ({{comments.count}})</h2>
+            <h3 class="text-md lg:text-lg font-bold p-2">Sort by: <a class="hover:cursor-pointer" onclick=sort("votes")>Votes</a> | <a  class="hover:cursor-pointer" onclick=sort("created_at")>Date</a></h3>
+        </div>
 
+        <div class="mb-4" id="fake-form">
+            {% csrf_token %}
+            <div class="py-2 px-4 mb-2 rounded-lg rounded-t-lg border bg-slate-200 border-slate-300 shadow-sm shadow-slate-400">
+                <label for="comment" class="sr-only">Your comment</label>
+                <textarea id="comment-text-area" name="comment" rows="2" class="px-0 w-full border-0 focus:ring-0 focus:outline-slate-400 bg-slate-200 placeholder-slate-700" placeholder="Write a comment..." required></textarea>
+            </div>
+            <button onclick=comment('{{post.id}}','{{csrf_token}}') type="submit" value="comment" class="bg-slate-200 hover:bg-slate-400 rounded-xl p-2 shadow-sm shadow-slate-600 active:shadow-sm">
+                Comment 
+            </button>
+        </div>
 
-</body>
-</html>
-
+        <div id="comment-section">
+            {% include "blog/comment_list.html" %}
+        </div>
+    
+    </div>
+    </section>
+{% endblock %}

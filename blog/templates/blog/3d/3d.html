@@ -1,38 +1,49 @@
 {% extends "blog/base/base.html" %}
 {% load static %}
 {% load static tailwind_tags %}
-<head>
-    <title>BrosCode Main Page</title>
-    {% tailwind_css %}
-</head>
-<body>
-	{% block content %}
+{% block content %}
+<script src="{% static 'blog/three.js' %}"  ></script>
+<script type="module"  src="{% static 'blog/orbitControls.js' %}"  ></script>
+<script type="module" src="{% static 'blog/threeCode.js' %}" ></script>
+<script>
+	document.getElementById("sidebar").style.display = "none";
+</script>
+<script src="https://sdk.scdn.co/spotify-player.js"></script>
+{% if user.spotify_access_token %}
 	<script>
-		$("#sidebar-left").addClass("hidden");
-	</script>
-	<div id="allPosts" class="hidden absolute">
-		<div id="profile-picture-urls" class="hidden absolute"> 
-			{% for user, posts_ in user_to_posts.items %}
-				{{user.profile_picture.url}},
-			{% endfor %}
-		</div>
-		<div id="profile-usernames" class="hidden absolute"> 
-			{% for user, posts_ in user_to_posts.items %}
-				{{user.username}},
-			{% endfor %}
-		</div>
-	</div> 
-	<script src="{% static 'blog/three.js' %}"  ></script>
-	<script type="module"  src="{% static 'blog/orbitControls.js' %}"  ></script>
-	<script type="module" src="{% static 'blog/threeCode.js' %}" ></script>
-	
+		token = '{{user.spotify_access_token}}';
+		refresh_token = '{{user.spotify_refresh_token}}';
+		failure_url = "{% url 'blog:Spotify' %}";
+		waitForSpotifyWebPlaybackSDKToLoad(token, failure_url);
+		console.log("connecting...") 
+  	</script>
 	<div id="canvas-container" class=""></div>
-		<div id="container">
-		<canvas id="canvas-3d"></canvas>
-		<div id="labels"></div>
-	  </div>
+	<div id="container">
+	  <canvas id="canvas-3d"></canvas>
+	  <div id="labels"></div>
 	</div>
-	
-	{% endblock %}
+  </div>
+	<div class="absolute z-10 bg-[#1DB954] bottom-6 right-0 w-full h-20 rounded-t-3xl  p-2">
+		<div id="spotify-player">
+			<div id="player-info">
+				<div id="player-track-name"></div>
+				<div id="player-track-artist"></div>
+			</div>
+			<button id="togglePlay" onclick="togglePlay()">
+				Play
+			</button>
+		</div>
+	</div>
+{% else %}
+	<div class="flex flex-col items-center justify-center h-screen pb-20">
+		<div class="flex flex-col items-center justify-center top">
+			<div class="text-3xl font-bold">Connect to Spotify</div>
+			<div class="text-xl">To use this feature, you must connect to Spotify</div>
+		</div>
+		<div class="flex flex-col items-center justify-center mt-4">
+			<a href="{% url 'blog:Spotify' %}" class="bg-[#1DB954] text-white rounded-full px-4 py-2">Connect</a>
+		</div>
+	</div>
+{% endif %}
 
-</body>
+{% endblock %}

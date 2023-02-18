@@ -12,13 +12,12 @@ from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str # force_text on older versions of Django
 from .forms import PostForm, ProfilePictureForm, SignUpForm, token_generator, user_model
 from .models import  Post, Comment, User
-from pathlib import Path
 import requests
-import os
 import environ
 env = environ.Env()
 environ.Env.read_env() 
 
+SPOTIFY_API_URL = 'https://api.spotify.com/v1'
 modelDict = dict(
     post=Post,
     comment=Comment
@@ -101,19 +100,15 @@ def profile(req, pk):
 
 class Spotify(View):
     api_url = 'https://api.spotify.com/v1/'
-
     def get(self, req):
         if not req.user.is_authenticated:
             return HttpResponseRedirect(reverse('blog:login'))
         if not req.user.spotify_access_token:
+            print("no token")
             return HttpResponseRedirect(reverse('blog:spotify_login'))
-        # make query for user's top artists
-        # make query for user's top tracks
-        # make query for user's top genres
         context = {}
-        top_artists = 'me/top/artists?time_range=medium_term&limit=100'
-        top_tracks = 'me/top/tracks?time_range=medium_term&limit=100'
-        # make query for user's top artists
+        top_artists = 'me/top/artists?time_range=long_term&limit=200'
+        top_tracks = 'me/top/tracks?time_range=long_term&limit=200'
         top = requests.get(self.api_url + top_artists, headers={'Authorization': 'Bearer ' + req.user.spotify_access_token})
         if top.status_code == 401:
             return HttpResponseRedirect(reverse('blog:spotify_login'))
@@ -129,11 +124,15 @@ class Spotify(View):
             track_info = {}
             track_info['name'] = track['name']
             track_info['artist'] = track['artists'][0]['name']
+            track_info['url_name'] = " ".join(track['name'].split(" ")).replace(' ', '-')
+            track_info['url_artist'] = " ".join(track['artists'][0]['name'].split(" ")).replace(' ', '-')
             track_info['album_art'] = track['album']['images'][0]['url']
+            track_info['song_id'] = track['id']
             top_tracks.append(track_info)
         
         context['top_artists'] = top_artists
         context['top_tracks'] = top_tracks
+        context['token'] = req.user.spotify_access_token
         return render(req, 'blog/spotify.html', context)
 
             
@@ -151,11 +150,7 @@ class SpotifyLogin(RedirectView):
         return super().get(req)
 
 
-
 class SpotifyCallback(RedirectView):
-    # get access token
-    # save access token to user
-    # redirect to spotify page
     url = reverse_lazy('blog:Spotify')
     def get(self, req):
         # save access token to user
@@ -178,11 +173,30 @@ class SpotifyCallback(RedirectView):
                 return super().get(req)
 
 
-
-
-class SpotifyProfile(View):
-    def get(self, req):
-        return render(req, 'blog/spotify.html')
+class SpotifySongView(View):
+    def get(self, *args, **kwargs):
+        # this is the view that will be called when the user clicks on a song
+        # and it will show all of the song info
+        # and the user will be able to add it to their playlist
+        song_id = kwargs.get('song_id')
+        context = {}
+        track_info = f'/tracks/{song_id}'
+        request_url = SPOTIFY_API_URL + track_info
+        response = requests.get(request_url, headers={'Authorization': 'Bearer ' + self.request.user.spotify_access_token})
+        if response.status_code == 401:
+            return HttpResponseRedirect(reverse('blog:spotify_login'))
+        track_info_json = response.json()
+        context['album_art_url'] = track_info_json['album']['images'][0]['url']
+        context['song'] = track_info_json['name']
+        context['artist'] = track_info_json['artists'][0]['name']
+        url = f'/audio-features/{song_id}'
+        request_url = SPOTIFY_API_URL + url
+        response = requests.get(request_url, headers={'Authorization': 'Bearer ' + self.request.user.spotify_access_token})
+        if response.status_code == 401:
+            return HttpResponseRedirect(reverse('blog:spotify_login'))
+        response_json = response.json()
+        context['song_info'] = response_json
+        return render(self.request, 'blog/song.html', context)
 
 
 class SignUpView(CreateView):

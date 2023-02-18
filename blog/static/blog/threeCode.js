@@ -1,39 +1,74 @@
-const G = 32.81;
-let camera_data = {direction: new THREE.Vector3(0,0,1), position: new THREE.Vector3(0, 5, 0), rot: new THREE.Vector3(0, 0, 0), vel: new THREE.Vector3(0, 0, 0), acc: new THREE.Vector3(0, 0, 0)}
-
+import {CameraHandler} from './cameraHandler.js';
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
-const renderer = new THREE.WebGLRenderer({
-	canvas: document.querySelector('#canvas-3d'),
-});
+const renderer = new THREE.WebGLRenderer({canvas: document.querySelector('#canvas-3d'),});
 renderer.domElement.style.width = '100%';
 renderer.domElement.style.height = '100%';
-
-const axesHelper = new THREE.AxesHelper( 5 );
-scene.add( axesHelper );
-
 camera.position.set(0, 10, 0);
-
 const PlaneGeometry = new THREE.PlaneGeometry(1000, 1000);
 const planeMaterial = new THREE.MeshStandardMaterial({color: 0xffffff});
 const plane = new THREE.Mesh(PlaneGeometry, planeMaterial);
 plane.rotation.x = -Math.PI/2;
 scene.add(plane);
 
-const geometry = new THREE.TorusKnotGeometry( 5, 1.5, 50, 16 );
+function makeRoom(x, y, size, url) {
+	const room = new THREE.Group();	
+	let light_color = 0xffffff;
+	const opening_size = size / 4;
+	const center_light = new THREE.PointLight(light_color, 1, size, 1);
+	center_light.position.set(x, size/2, -y);
+	room.add(center_light);
 
-const material = new THREE.MeshStandardMaterial( { color: 0xffffff});
-const torus = new THREE.Mesh(geometry, material)
-torus.translateZ(-100)
-torus.translateY(15)
-scene.add( torus );
+	const ceiling = new THREE.Mesh(new THREE.BoxGeometry(size, 1, size), new THREE.MeshStandardMaterial({color: 0x61faff}));
+	ceiling.translateX(x)
+	ceiling.translateY(size);
+	ceiling.translateZ(-y);
+	room.add(ceiling);
 
-const light = new THREE.PointLight(0xffffff, 20, 20);
-light.position.set(0, 90, 0);
-scene.add(light); 
+	const wall_size = size - opening_size/2;
+
+	const front_wall = new THREE.Mesh(new THREE.BoxGeometry(wall_size, size, 1), new THREE.MeshStandardMaterial({color: 0x61faff}));
+	front_wall.translateX(x);
+	front_wall.translateZ(-y + size/2);
+	front_wall.translateY(size/2);
+	front_wall.material.map = new THREE.TextureLoader().load(url);	
+	room.add(front_wall);
+
+	const back_wall = new THREE.Mesh(new THREE.BoxGeometry(wall_size, size, 1), new THREE.MeshStandardMaterial({color: 0x61faff}));
+	back_wall.translateX(x);
+	back_wall.translateZ(-y - size/2);
+	back_wall.translateY(size/2);
+	back_wall.material.map = new THREE.TextureLoader().load(url);
+	room.add(back_wall);
+
+	const left_wall = new THREE.Mesh(new THREE.BoxGeometry(1, size, wall_size), new THREE.MeshStandardMaterial({color: 0x61faff}));
+	left_wall.translateX(x - size/2);
+	left_wall.translateZ(-y);
+	left_wall.translateY(size/2);
+	left_wall.material.map = new THREE.TextureLoader().load(url);
+	room.add(left_wall);
+
+	const right_wall = new THREE.Mesh(new THREE.BoxGeometry(1, size, wall_size), new THREE.MeshStandardMaterial({color: 0x61faff}));
+	right_wall.translateX(x + size/2);
+	right_wall.translateZ(-y);
+	right_wall.translateY(size/2);
+	right_wall.material.map = new THREE.TextureLoader().load(url);
+	room.add(right_wall);
+
+	const floor = new THREE.Mesh(new THREE.BoxGeometry(size, 1, size), new THREE.MeshStandardMaterial({color: 0x61faff}));
+	floor.translateX(x);
+	floor.translateZ(-y);
+	floor.translateY(.5);
+	room.add(floor);
+	return room;
+}
+
+const follow_light = new THREE.PointLight(0x420420, 1, 15);
+follow_light.position.set(0, 90, 0);
+
+scene.add(follow_light); 
 const sphereSize = 1;
-const pointLightHelper = new THREE.PointLightHelper( light, sphereSize );
-scene.add( pointLightHelper );
+
 
 scene.background = new THREE.Color(0x444444);
 
@@ -48,210 +83,63 @@ function resizeCanvasToDisplaySize() {
 	}
 }
 
-(document).onclick = function(event) {
-	let mouse = new THREE.Vector2();
-	mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-	mouse.y = -(event.clientY / window.innerHeight) * 2 + 1; 
-	let raycaster = new THREE.Raycaster();
-	raycaster.setFromCamera(mouse, camera);
-	let intersects = raycaster.intersectObjects(scene.children);
-	if (intersects.length > 0) {
-		console.log(intersects)
-		let object = intersects[0].object;
-		let direction = new THREE.Vector3();
-		direction.subVectors(object.position, camera.position).normalize();
-		// calculte rotation around y axis to face object
-		// calculate rotation around x axis to keep camera level
-		// rotate camera
-		camera_data.rot.y = Math.atan2(direction.x, direction.z) - Math.PI;
-		// update position of camera to be on same vector as object
-		camera_data.position.x = object.position.x - (direction.x * 10);
-		camera_data.position.z = object.position.z - (direction.z * 10);
-	}
-}
+let room_size = 100;
+const userObject = new CameraHandler(camera, follow_light)
+const clock = new THREE.Clock();
 
-$(document).keydown(function(event) {
-	startMove(event);
-})
 
-$(document).keyup(function(event) {
-	stopMove(event);
-})
-
-const startMove = function(input) {
-	let key = input.key;
-	inputs[key] = true;
-}
-const stopMove = function(input) {
-	let key = input.key;
-	inputs[key] = false;
-}
-const moveForward = function() {
-	camera_data.position.x += camera_data.direction.x;
-	camera_data.position.y += camera_data.direction.y;
-	camera_data.position.z += camera_data.direction.z;
-}
-const moveBackward = function() {
-	camera_data.position.x -= camera_data.direction.x;
-	camera_data.position.y -= camera_data.direction.y;
-	camera_data.position.z -= camera_data.direction.z;
-}
-const moveLeft = function() {
-	camera_data.position.x += camera_data.direction.z;
-	camera_data.position.z -= camera_data.direction.x;
-}
-const moveRight = function() {
-	camera_data.position.x -= camera_data.direction.z;
-	camera_data.position.z += camera_data.direction.x;
-}
-const moveUp = function() {
-	camera_data.position.y += 1;
-}
-const moveDown = function() {
-	camera_data.position.y -= 1;
-}
-const turnLeft = function() {
-	camera_data.rot.y += .04;
-}
-const turnRight = function() {
-	camera_data.rot.y -= .04;
-}
-const turnUp = function() {
-	camera_data.rot.x += .04;
-}
-const turnDown = function() {
-	//for what?
-	camera_data.rot.x -= .04;
-}
-const jump = function() {
-	camera_data.vel.y = 1;
-}
-
-const gravity = function(delta_time) {
-	camera_data.position.y += camera_data.vel.y ;
-	camera_data.vel.y += camera_data.acc.y ;
-	camera_data.acc.y += (-G * (delta_time) * (delta_time));
-	if (camera_data.position.y <= 5) {
-		camera_data.acc.y = 0;
-		camera_data.vel.y = 0;
-		camera_data.position.y = 5;
-	}
-}
-
-const handlePysics = function(delta_time) {
-	gravity(delta_time)
-
-}
-
-const handleMovement = function(inputs, controls) {
-	for (let key in inputs) {
-		if (inputs[key]) {
-			controls[key]();
+function adjacentRooms(current_room_center) {
+	let adjacent_rooms = [];
+	for (let x = -1; x <= 1; x++) {
+		for (let z = -1; z <= 1; z++) {
+			if (x == 0 && z == 0) {
+				continue;
+			}
+			adjacent_rooms.push(new THREE.Vector3(current_room_center.x + x, current_room_center.y, current_room_center.z + z));
 		}
 	}
+	return adjacent_rooms;
 }
 
-let profile_picture_urls = $("#profile-picture-urls").text().split(",").map(function(item) {
-	return item.trim();
-}).filter(function(item) {
-	return item.length > 0;
-})
-let profile_usernames = $("#profile-usernames").text().split(",").map(function(item) {
-	return item.trim();
-}).filter(function(item) {
-	return item.length > 0;
-})
-
-let profile_picutes = []
-for (let i = 0; i < profile_picture_urls.length; i++) {
-	let texture = new THREE.TextureLoader().load(profile_picture_urls[i]);
-	let material = new THREE.MeshBasicMaterial({map: texture});
-	let geometry = new THREE.BoxGeometry(10, 10, 10)
-	let mesh = new THREE.Mesh(geometry, material);
-	mesh.position.set(0, 5, 0);
-	mesh.translateX(i * 20);
-	scene.add(mesh);
-	profile_picutes.push(mesh);
-}
-
-
-
-const setTextDivs = function() {
-	for (let i = 0; i < profile_picutes.length; i++) {
-		let username = profile_usernames[i];
-		console.log(username)
-		let vector = new THREE.Vector3();
-		vector.setFromMatrixPosition(profile_picutes[i].matrixWorld);
-		vector.project(camera);
-		vector.x = (vector.x + 1) / 2 * window.innerWidth;
-		vector.y = -(vector.y - 1) / 2 * window.innerHeight;
-		//create div 
-		let div = document.createElement("div");
-		div.style.position = "absolute";
-		div.style.left = vector.x + "px";
-		div.style.top = vector.y + "px";
-		div.style.color = "white";
-		div.style.fontSize = "20px";
-		div.style.fontFamily = "Arial";
-		div.style.zIndex = "1";
-		div.innerHTML = username;
-		div.id = "username-" + i;
-		document.body.appendChild(div);
+function addRoom(rooms, x_index, z_index, x, z, room_size, url) {
+	console.log("add room url", url)
+	let room = makeRoom(x, z, room_size, url);
+	scene.add(room);
+	if (rooms[x_index] == undefined) {
+		rooms[x_index] = {};
 	}
-}	
-setTextDivs()
-const updateTextDivs = function() {
-	for (let i = 0; i < profile_picutes.length; i++) {
-		let vector = new THREE.Vector3();
-		vector.setFromMatrixPosition(profile_picutes[i].matrixWorld);
-		vector.project(camera);
-		let div = document.getElementById("username-" + i);
-		// make text small if the object is far away 
-		let distance = camera_data.position.distanceTo(profile_picutes[i].position);
-		let size = 300 /  distance ;
-		div.style.fontSize =`${size}px`;
-		// make text invisible if the object is behind the camera
-		if (vector.z > 1) {
-			div.style.display = "none";
-			continue;
-		}
-		div.style.display = "block";
-		vector.x = (vector.x + 1) / 2 * window.innerWidth;
-		vector.y = -(vector.y - 1) / 2 * window.innerHeight;
-		div.style.left = vector.x + "px";
-		div.style.top = vector.y + "px";
+	rooms[x_index][z_index] = {room: room, loaded: true};
+}
+
+function loadRooms(rooms) {
+	let x  = (Math.round(camera.position.x / room_size)).toString();
+	let z =  (Math.round(-camera.position.z / room_size)).toString();
+	console.log()
+	let current_room_center = new THREE.Vector3(x, 0, z);
+	if (rooms[x] == undefined || rooms[x][z] == undefined && rooms[x][z]?.loaded != true) {
+		let room_x = current_room_center.x * room_size
+		let room_y = current_room_center.z * room_size
+		getPlaybackState().then((data) => {
+			let current_song = data.track_window.next_tracks[0];
+			let song_title = current_song.name;
+			let song_artist = current_song.artists[0].name;
+			let song_album = current_song.album.name;
+			let song_image = current_song.album.images[0].url;
+			addRoom(rooms, x, z, room_x, room_y, room_size, song_image);
+		}).catch((err) => {
+			addRoom(rooms, x, z, room_x, room_y, room_size, "nothing");
+			console.log("err", err)})
+		nextSong()
+
 	}
+	return rooms;
 }
-
-
-let controls = {"w": moveForward, "s": moveBackward, "a": moveLeft, "d": moveRight, "q":moveUp, "e": moveDown,  "ArrowLeft": turnLeft, "ArrowRight":turnRight, "ArrowUp": turnUp, "ArrowDown": turnDown,  " ": jump}
-let inputs = {"w": false, "s": false, "a": false, "d":false, "q":false, "e":false, "ArrowLeft": false, "ArrowRight":false}
-
-let prev_time = Date.now()
-let delta = Date.now() - prev_time;
-
-const updateCamera = function() {
-	delta = Date.now() - prev_time
-	handleMovement(inputs, controls);
-	handlePysics(delta / 1000)
-	camera.position.x = camera_data.position.x;
-	camera.position.y = camera_data.position.y;
-	camera.position.z = camera_data.position.z;
-	camera.rotation.x = camera_data.rot.x;
-	camera.rotation.y = camera_data.rot.y;
-	camera.rotation.z = camera_data.rot.z;
-	camera.getWorldDirection(camera_data.direction)
-	prev_time = Date.now();
-}
-
+let rooms = {};
 function animate() {
+	rooms = loadRooms(rooms); 
 	resizeCanvasToDisplaySize();
-	light.position.set(camera_data.position.x, camera_data.position.y + 10, camera_data.position.z);
-	updateCamera();
+	userObject.step(clock.getDelta());
 	renderer.render( scene, camera );
 	requestAnimationFrame( animate );
-	updateTextDivs();
 }; 
-
-
 animate();

@@ -7,7 +7,7 @@ urlpatterns = [
     path('spotify/', views.Spotify.as_view(), name='Spotify'),
     path('spotify/login/', views.SpotifyLogin.as_view(), name='spotify_login'),
     path('spotify/redirect/', views.SpotifyCallback.as_view(), name='spotify_redirect'),
-
+    path('spotify/<str:artist_name>/<str:song_name>/<str:song_id>', views.SpotifySongView.as_view(), name='spotify_song_view'),
 
     path('3d/', views.three, name='3d'),
     path('profile/<int:pk>/3d', views.three_profile, name='3d_profile'),
