@@ -14,7 +14,7 @@ scene.add(plane);
 function makeRoom(center) {
 	let url = "none";
 	let size = 100;
-	let opening_size = 0;
+	let opening_size = size / 4;
 	let x = parseInt(center.x) * size;
 	let y = -parseInt(center.z) * size;
 	const wall_size = size - opening_size/2;
@@ -29,34 +29,39 @@ function makeRoom(center) {
 	ceiling.translateX(x)
 	ceiling.translateY(size);
 	ceiling.translateZ(y);
+	ceiling.isSideWall = false;
 	room.add(ceiling);
 
 	const front_wall = new THREE.Mesh(new THREE.BoxGeometry(wall_size, size, 1), new THREE.MeshStandardMaterial({color: 0x61faff}));
 	front_wall.translateX(x);
 	front_wall.translateZ(y + size/2);
 	front_wall.translateY(size/2);
-	front_wall.material.map = new THREE.TextureLoader().load(url);	
+	front_wall.isSideWall = true;
+	// front_wall.material.map = new THREE.TextureLoader().load(url);	
 	room.add(front_wall);
 
 	const back_wall = new THREE.Mesh(new THREE.BoxGeometry(wall_size, size, 1), new THREE.MeshStandardMaterial({color: 0x61faff}));
 	back_wall.translateX(x);
 	back_wall.translateZ(y - size/2);
 	back_wall.translateY(size/2);
-	back_wall.material.map = new THREE.TextureLoader().load(url);
+	back_wall.isSideWall = true;
+	// back_wall.material.map = new THREE.TextureLoader().load(url);
 	room.add(back_wall);
 
 	const left_wall = new THREE.Mesh(new THREE.BoxGeometry(1, size, wall_size), new THREE.MeshStandardMaterial({color: 0x61faff}));
 	left_wall.translateX(x - size/2);
 	left_wall.translateZ(y);
 	left_wall.translateY(size/2);
-	left_wall.material.map = new THREE.TextureLoader().load(url);
+	left_wall.isSideWall = true;
+	// left_wall.material.map = new THREE.TextureLoader().load(url);
 	room.add(left_wall);
 
 	const right_wall = new THREE.Mesh(new THREE.BoxGeometry(1, size, wall_size), new THREE.MeshStandardMaterial({color: 0x61faff}));
 	right_wall.translateX(x + size/2);
 	right_wall.translateZ(y);
 	right_wall.translateY(size/2);
-	right_wall.material.map = new THREE.TextureLoader().load(url);
+	// right_wall.material.map = new THREE.TextureLoader().load(url);
+	right_wall.isSideWall = true;
 	room.add(right_wall);
 
 	const floor = new THREE.Mesh(new THREE.BoxGeometry(size, 1, size), new THREE.MeshStandardMaterial({color: 0x61faff}));
@@ -64,6 +69,8 @@ function makeRoom(center) {
 	floor.translateZ(y);
 	floor.translateY(.5);
 	room.add(floor);
+	floor.isSideWall = false;
+
 	return room;
 }
 
@@ -141,7 +148,7 @@ class RoomLoader{
 		}
 	}
 
-	savePlaybackState(room_center, song_id, song_name, artist_name, timestamp) {
+	savePlaybackState(room_center, song_id, song_name, artist_name, timestamp, album_art_url) {
 		let x_index = room_center.x.toString();
 		let z_index = room_center.z.toString();
 		if (this.room_data[x_index] == undefined || this.room_data[x_index][z_index] == undefined) {
@@ -151,6 +158,7 @@ class RoomLoader{
 		this.room_data[x_index][z_index].song_name = song_name;
 		this.room_data[x_index][z_index].artist_name = artist_name;
 		this.room_data[x_index][z_index].timestamp = timestamp;
+		this.room_data[x_index][z_index].album_art_url = album_art_url;
 	}
 	
 	async handleRoomExit(room_center) {
@@ -161,11 +169,13 @@ class RoomLoader{
 			return;
 		}
 		let song_info = await getPlaybackState();
+		console.log(song_info);
 		let timestamp = song_info.position;
 		let song_id = song_info.track_window.current_track.id;
 		let song_name = song_info.track_window.current_track.name;
 		let artist_name = song_info.track_window.current_track.artists[0].name;
-		this.savePlaybackState(this.prev_room_center, song_id, song_name, artist_name, timestamp);
+		let album_art_url = song_info.track_window.current_track.album.images[0].url;
+		this.savePlaybackState(this.prev_room_center, song_id, song_name, artist_name, timestamp, album_art_url);
 	}
 
 	async handleRoomEnter(prev_room_center, room_center) {
@@ -209,6 +219,10 @@ class RoomLoader{
 		let room_children = current_room.children.filter(child => child?.isMesh);	
 		for (let wall of room_children) { 
 			wall.material.map = new THREE.TextureLoader().load(album_art_url);
+			wall.material.side = THREE.DoubleSide;
+			wall.material.needsUpdate = true;
+
+			console.log(wall)
 
 		}
 

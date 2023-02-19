@@ -250,9 +250,7 @@ function togglePlay() {
     } else {
         window.player.togglePlay().then(() => {
             console.log('Toggled playback!');
-        }).catch(err => {
-            console.log(err)
-        });
+        })
     }
 }
 
@@ -286,7 +284,7 @@ class SpotifyApi {
     }
     setPlayer(player) {
         this.player = player
-        this.transferPlayback(this.device_id)
+        this.transferPlayback(this.device_id, true)
         this.player.activateElement().then( 
             () => {
                 console.log("activated")
