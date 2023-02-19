@@ -34,13 +34,7 @@ def index(request):
 
 
 def three(request):
-    users = User.objects.all()
-    posts = Post.objects.all()
-    user_to_posts = {}
-    for user in users:
-        user_to_posts[user] = [Post.objects.all().filter(author=user)]
-    print(user_to_posts)
-    return render(request, 'blog/3d/3d.html', {'users': users, 'posts': posts, 'user_to_posts': user_to_posts})
+    return render(request, 'blog/3d/3d.html')
 
 
 def three_profile(request, pk):

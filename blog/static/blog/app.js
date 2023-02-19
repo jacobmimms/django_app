@@ -162,6 +162,7 @@ async function waitForSpotifyWebPlaybackSDKToLoad (access_token, failure_url) {
         resolve(window.Spotify);
       } else {
         window.onSpotifyWebPlaybackSDKReady = () => {
+            window.spotifyApi = new SpotifyApi(access_token, null, failure_url)
             console.log("Spotify SDK starting", access_token)
             const token = access_token;
             const player = new Spotify.Player({
@@ -172,6 +173,8 @@ async function waitForSpotifyWebPlaybackSDKToLoad (access_token, failure_url) {
             // Ready
             player.addListener('ready', ({ device_id }) => {
                 console.log('Ready with Device ID', device_id);
+                window.spotifyApi.setDeviceId(device_id)
+                window.spotifyApi.setPlayer(player)
             });
         
             // Not Ready
@@ -192,9 +195,13 @@ async function waitForSpotifyWebPlaybackSDKToLoad (access_token, failure_url) {
             player.addListener('account_error', ({ message }) => {
                 console.error(message);
             });
+
+            // make the player the current active player by transferring playback using the device id
+         
+
+
             player.connect();
             window.player = player;
-            resolve(window.Spotify);
         }
       }
     });
@@ -214,14 +221,225 @@ async function getPlaybackState() {
     )
 }
 
-function nextSong() {
+async function nextSong() {
     if (window.player) {
-        window.player.nextTrack();
+        return window.player.nextTrack().then(() => {
+            console.log('Skipped to next track!');
+            return getPlaybackState().then(state => {
+                return state
+            }).catch(err => {
+                console.log(err)
+            })
+        });
+    } else {
+        return "User is not playing music through the Web Playback SDK"
+    }
+}
+
+function seekSong(position) {
+    if (window.player) {
+        window.player.seek(position);
     } else {
         return "User is not playing music through the Web Playback SDK"
     }
 }
 
 function togglePlay() {
-    window.player.togglePlay();
+    if (!window.player) {
+        return "User is not playing music through the Web Playback SDK"
+    } else {
+        window.player.togglePlay().then(() => {
+            console.log('Toggled playback!');
+        }).catch(err => {
+            console.log(err)
+        });
+    }
+}
+
+async function currentSongId() {
+    if (window.player) {
+        return window.player.getCurrentState().then(state => {
+            if (!state) {
+                console.error('User is not playing music through the Web Playback SDK');
+                return;
+            }
+            let {
+                current_track: currentTrack,
+                next_tracks: [nextTrack]
+            } = state.track_window;
+            return currentTrack.id
+        })
+    } else {
+        return "User is not playing music through the Web Playback SDK"
+    }
+
+}
+
+class SpotifyApi {
+    constructor(access_token, refresh_token, failure_url) {
+        this.access_token = access_token
+        this.refresh_token = refresh_token
+        this.api_url = 'https://api.spotify.com/v1/'
+    }
+    setDeviceId(device_id) {
+        this.device_id = device_id
+    }
+    setPlayer(player) {
+        this.player = player
+        this.transferPlayback(this.device_id)
+        this.player.activateElement().then( 
+            () => {
+                console.log("activated")
+            }
+        )
+    }
+    async playSong(song_id, timestamp) {
+        return new Promise(resolve => {
+            console.log("playing sonog", song_id, "at timestamp", timestamp)
+            $.ajax({
+                url: `${this.api_url}me/player/play`,
+                type: 'PUT',
+                data: JSON.stringify({
+                    "uris": [`spotify:track:${song_id}`],
+                    "position_ms": timestamp
+                }),
+                beforeSend: (xhr) => {
+                    xhr.setRequestHeader('Authorization', `Bearer ${this.access_token}`);
+                },
+                success: (response) => {
+                    console.log(response)
+                    resolve(response)
+                },
+                error: (response) => {
+                    console.log(response)
+                    resolve(response)
+                }
+            })
+        })
+    }
+    transferPlayback(device_id) {
+        return new Promise(resolve => {
+            $.ajax({
+                url: `${this.api_url}me/player`,
+                type: 'PUT',
+                data: JSON.stringify({
+                    "device_ids": [device_id],
+                    "play": true
+                }),
+                beforeSend: (xhr) => {
+                    xhr.setRequestHeader('Authorization', `Bearer ${this.access_token}`);
+                },
+                success: (response) => {
+                    resolve(response)
+                },
+                error: (response) => {
+                    resolve(response)
+                }
+            })
+        })
+    }
+
+    async getPlaybackState() {
+        return new Promise(resolve => {
+            $.ajax({
+                url: `${this.api_url}me/player`,
+                type: 'GET',
+                beforeSend: (xhr) => {
+                    xhr.setRequestHeader('Authorization', `Bearer ${this.access_token}`);
+                },
+                success: (response) => {
+                    resolve(response)
+                },
+                error: (response) => {
+                    resolve(response)
+                }
+            })
+        })
+    }
+    async getCurrentlyPlaying() {
+        return new Promise(resolve => {
+            $.ajax({
+                url: `${this.api_url}me/player/currently-playing`,
+                type: 'GET',
+                beforeSend: (xhr) => {
+                    xhr.setRequestHeader('Authorization', `Bearer ${this.access_token}`);
+                },
+                success: (response) => {
+                    resolve(response)
+                },
+                error: (response) => {
+                    resolve(response)
+                }
+            })
+        })
+    }
+    
+    async getRecommendations(seed_tracks, seed_artists, seed_genres, limit) {
+        return new Promise(resolve => {
+            $.ajax({
+                url: `${this.api_url}recommendations?seed_tracks=${seed_tracks}&seed_artists=${seed_artists}&seed_genres=${seed_genres}&limit=${limit}`,
+                type: 'GET',
+                beforeSend: (xhr) => {
+                    xhr.setRequestHeader('Authorization', `Bearer ${this.access_token}`);
+                },
+                success: (response) => {
+                    resolve(response)
+                },
+                error: (response) => {
+                    resolve(response)
+                }
+            })
+        })
+    }
+    async getFavoriteSongs(limit) {
+        return new Promise(resolve => {
+            $.ajax({
+                url: `${this.api_url}me/tracks?limit=${limit}`,
+                type: 'GET',
+                beforeSend: (xhr) => {
+                    xhr.setRequestHeader('Authorization', `Bearer ${this.access_token}`);
+                },
+                success: (response) => {
+                    resolve(response)
+                },
+                error: (response) => {
+                    resolve(response)
+                }
+            })
+        })
+    }
+    async getRecommendationsFromSong(seed_tracks, limit, max_tempo, min_tempo, max_danceability, min_danceability, max_energy, min_energy, max_valence, min_valence) {
+        return new Promise(resolve => {
+            $.ajax({
+                url: `${this.api_url}recommendations?seed_tracks=${seed_tracks}&limit=${limit}`,
+                type: 'GET',
+                beforeSend: (xhr) => {
+                    xhr.setRequestHeader('Authorization', `Bearer ${this.access_token}`);
+                },
+                success: (response) => {
+                    resolve(response)
+                },
+                error: (response) => {
+                    resolve(response)
+                }
+            })
+        })
+    }
+    async getTrack(track_id) {
+        return new Promise(resolve => {
+            $.ajax({
+                url: `${this.api_url}tracks/${track_id}`,
+                type: 'GET',
+                beforeSend: (xhr) => {
+                    xhr.setRequestHeader('Authorization', `Bearer ${this.access_token}`);
+                },
+                success: (response) => {
+                    resolve(response)
+                },
+                error: (response) => {
+                    resolve(response)
+                }
+            })
+        })
+    }
 }

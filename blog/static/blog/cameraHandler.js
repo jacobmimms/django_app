@@ -1,7 +1,8 @@
 // this class handles all user input for controlling the three.js camera
 const G = 32.81;
 export class CameraHandler {
-    constructor(camera, light) {
+    constructor(camera, light, room_size) {
+        this.room_size = room_size;
         this.prev_time = Date.now();
         this.camera = camera;
         this.light = light;
@@ -20,6 +21,7 @@ export class CameraHandler {
 
     }
     step(delta) {
+        this.pre_update_center = this.getRoomCenter();
         for (let key in this.inputs) {
             if (!this.controls.hasOwnProperty(key)) continue;
             if (this.inputs[key] == true) {
@@ -28,8 +30,15 @@ export class CameraHandler {
         }
         this.handlePysics(delta / 1000)
         this.updateCamera();
+        this.post_update_center = this.getRoomCenter();
+        if (!this.pre_update_center.equals(this.post_update_center)) {
+            console.log("room changed")
+            return {room_change:{next_room: this.post_update_center, prev_room: this.pre_update_center}}
+        }
         this.prev_time = Date.now();
+
     }
+
     updateCamera(){
         this.camera.position.x = this.camera_data.position.x;
         this.camera.position.y = this.camera_data.position.y;
@@ -40,6 +49,7 @@ export class CameraHandler {
 	    this.light.position.set(this.camera_data.position.x, this.camera_data.position.y + 10, this.camera_data.position.z);
         //this sets the camera to point in the direction of the camera_data.direction vector
         this.camera.getWorldDirection(this.camera_data.direction)
+
 
     }
     startKeypress(input) {
@@ -139,5 +149,11 @@ export class CameraHandler {
     }
     handlePysics(delta_time) {
         this.gravity(delta_time)
+    }
+    getRoomCenter() {
+        let x = (Math.round(this.camera.position.x / this.room_size)).toString();
+        let z = (Math.round(-this.camera.position.z / this.room_size)).toString();
+        let current_room_center = new THREE.Vector3(x, 0, z);
+        return current_room_center;
     }
 }
