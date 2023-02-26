@@ -9,8 +9,9 @@ export class CameraHandler {
         this.camera_data = {direction: new THREE.Vector3(0,0,1), position: new THREE.Vector3(0,50, 0), rot: new THREE.Vector3(0, 0, 0), vel: new THREE.Vector3(0, 0, 0), acc: new THREE.Vector3(0, 0, 0)}
         this.camera.getWorldDirection(this.camera_data.direction)
         this.camera_data.direction.multiplyScalar(10);
-        this.inputs = { "w": false, "s": false, "a": false, "d":false, "q":false, "e":false, "ArrowLeft": false, "ArrowRight":false}
-        this.controls = {parent:this,"w": this.moveForward, "s": this.moveBackward, "a": this.moveLeft, "d": this.moveRight, "q":this.moveUp, "e": this.moveDown,  "ArrowLeft": this.turnLeft, "ArrowRight":this.turnRight, "ArrowUp": this.tiltUp, "ArrowDown": this.tiltDown}
+        this.inputs = { "w": false, "s": false, "a": false, "d":false, "q":false, "e":false, "ArrowLeft": false, "ArrowRight":false, "ArrowUp": false, "ArrowDown":false}
+
+        this.controls = {parent:this,"w": this.moveForward, "s": this.moveBackward, "a": this.moveLeft, "d": this.moveRight, "q":this.moveUp, "e": this.moveDown,  "ArrowLeft": this.turnLeft, "ArrowRight":this.turnRight, "ArrowUp": this.turnAround, "ArrowDown": this.turnAround}
         this.speed = .35;
         document.addEventListener("keydown", (event) => {
             this.startKeypress(event);
@@ -89,11 +90,17 @@ export class CameraHandler {
         this.parent.camera_data.position.y -= 1;
     }
     turnLeft() {
-        this.parent.camera_data.rot.y += .04;
+        this.parent.camera_data.rot.y += .02;
 
     }
     turnRight() {
-        this.parent.camera_data.rot.y -= .04;
+        this.parent.camera_data.rot.y -= .02;
+    }
+    turnAround() {
+        // this.parent.camera_data.rot.y += Math.PI;
+        // debounce this 
+        // this.parent.camera_data.rot.y += Math.PI;
+
     }
     tiltUp() {
         let tilt = this.parent.camera_data.direction;

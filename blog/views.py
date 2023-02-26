@@ -36,6 +36,7 @@ def index(request):
 
 
 def three(req):
+    print("rerendering")
     return render(req, 'blog/3d/3d.html', {"token": req.user.spotify_access_token})
 
 

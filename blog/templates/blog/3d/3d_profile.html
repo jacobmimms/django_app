@@ -2,22 +2,4 @@
 {% load static %}
 {% load static tailwind_tags %}
 {% block content %}
-<script src="{% static 'blog/three.js' %}"  ></script>
-<script type="module"  src="{% static 'blog/orbitControls.js' %}"  ></script>
-<script type="module" src="{% static 'blog/threeCode.js' %}" ></script>
-<div id="canvas-container" class="w-1/2 h-1/2"></div>
-	<canvas id="canvas-3d"></canvas>
-	<div id="labels"></div>
-</div>
-<div id="allPosts" class="hidden">
-	<div id="profile-picture-urls"> 
-		{% for user, posts_ in user_to_posts.items %}
-			{{user.profile_picture.url}},
-		{% endfor %}
-	</div>
-	<!-- {% for user, posts_ in user_to_posts.items %}
-		<h1 class="title">{{ user.username }}</h1>
-		<span id="profile_picture_url-{{user.username}}"> {{user.profile_picture.url}} </span>
-	{% endfor %} -->
-</div> 
 {% endblock %}

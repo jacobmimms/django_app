@@ -2,16 +2,25 @@
 {% load static %}
 {% load static tailwind_tags %}
 {% block content %}
+<script type="module"  src="{% static 'blog/orbitControls.js' %}"></script>
+<script type="module" src="{% static 'blog/threeCode.js' %}"></script>
+<script src="{% static 'blog/spotifyApi.js' %}"></script>
 <script src="{% static 'blog/three.js' %}"  ></script>
-<script type="module"  src="{% static 'blog/orbitControls.js' %}"  ></script>
-<script type="module" src="{% static 'blog/threeCode.js' %}" ></script>
-<script>
-	document.getElementById("sidebar").style.display = "none";
-
-	document.getElementById("header").classList.add('bg-transparent');
-
+<script> 
+	access_token = '{{user.spotify_access_token}}';
+	failure_url = "{% url 'blog:Spotify' %}";
+	window.spotifyApi = new SpotifyApi(access_token, null, failure_url)
 </script>
-{% if token == '1'%}
+<script> 
+	token = '{{user.spotify_access_token}}';
+	refresh_token = '{{user.spotify_refresh_token}}';
+	failure_url = "{% url 'blog:Spotify' %}";
+	waitForSpotifyWebPlaybackSDKToLoad(token, failure_url).then(() => {
+		console.log("Spotify Web Playback SDK loaded");
+		}
+	);
+</script>
+{% if token == '1'%} 
 	<div class="flex flex-col items-center justify-center h-screen pb-20">
 		<div class="flex flex-col items-center justify-center top">
 			<div class="text-3xl font-bold">Connect to Spotify</div>
@@ -22,31 +31,36 @@
 		</div>
 	</div>
 {% else %}
-	{% comment %} <script>
-		token = '{{user.spotify_access_token}}';
-		refresh_token = '{{user.spotify_refresh_token}}';
-		failure_url = "{% url 'blog:Spotify' %}";
-		waitForSpotifyWebPlaybackSDKToLoad(token, failure_url);
-		console.log("connecting...") 
-  	</script> {% endcomment %}
-
+	<script>
+		document.getElementById("sidebar").style.display = "none";
+		const handleToggle = () => {
+			if (document.getElementById("play").style.display == "block") {
+				document.getElementById("play").style.display = "none";
+				document.getElementById("pause").style.display = "block";
+			} else {
+				document.getElementById("play").style.display = "block";
+				document.getElementById("pause").style.display = "none";
+			}
+			window.spotifyApi.player.togglePlay();
+		}
+	</script>
 	<div id="canvas-container">
 	  <canvas id="canvas-3d"></canvas>
-	  <div id="labels"></div>
-	</div>
+	</div> 
 
-	<div class="absolute z-10 bg-[#1DB954] bottom-0 right-0 w-full h-20 rounded-t-3xl  p-2">
-		<div id="spotify-player" class="flex flex-row justify-around">
-			<div id="player-info">
-				<div id="player-track-name"></div>
-				<div id="player-track-artist"></div>
-			</div>
-			<button id="togglePlay" onclick="togglePlay()">
-
-				<img id="play-pause" src="{% static 'blog/images/play.png' %}" alt="play" class="w-10 h-10">
-				<img id="play-pause" src="{% static 'blog/images/pause.png' %}" alt="pause" class="w-10 h-10">
-
+	<div class="absolute z-10 bg-[#1DB954] bottom-0 right-0 justify-center items-center w-full rounded-t-3xl p-2">
+		<div id="spotify-player" class="flex flex-row justify-around items-center">
+			<button id="play-pause" class="h-full" onclick="handleToggle()"> 
+				<img id="play" src="{% static 'blog/images/play.png' %}" alt="play" class="w-10 h-10 outline-none ">
+				<img id="pause" src="{% static 'blog/images/pause.png' %}" alt="pause" class="hidden w-10 h-10 outline-none">
 			</button>
+			<img id="player-track-image" alt="track image" class="w-20 h-20">
+
+			<div id="player-info" class="h-full">
+				<div id="player-track-name" class="h-full">Nothing</div>
+				<div id="player-track-artist" class="h-full">Nothing</div>
+			</div>
+		
 		</div>
 	</div>
 {% endif %}

@@ -11,6 +11,12 @@ const plane = new THREE.Mesh(PlaneGeometry, planeMaterial);
 plane.rotation.x = -Math.PI/2;
 scene.add(plane);
 
+function uuidv4() {
+	return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+	  (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+	);
+  }
+
 function makeRoom(center, art_url) {
 	let url = art_url;
 	let size = 100;
@@ -33,16 +39,6 @@ function makeRoom(center, art_url) {
 	room.add(ceiling);
 
 	const front_wall = new THREE.Mesh(new THREE.BoxGeometry(wall_size, size, 1), new THREE.MeshStandardMaterial({color: 0x61faff}));
-	// make the wall transparent if the camera is inside the room
-	front_wall.onBeforeRender = function(renderer, scene, camera, geometry, material, group) {
-		if (camera.position.x > x - size/2 && camera.position.x < x + size/2 && camera.position.z > y - size/2 && camera.position.z < y + size/2) {
-			material.transparent = true;
-			material.opacity = 0.0;
-		} else {
-			material.transparent = false;
-			material.opacity = 1;
-		}
-	}
 	front_wall.translateX(x);
 	front_wall.translateZ(y + size/2);
 	front_wall.translateY(size/2);
@@ -51,15 +47,7 @@ function makeRoom(center, art_url) {
 	room.add(front_wall);
 
 	const back_wall = new THREE.Mesh(new THREE.BoxGeometry(wall_size, size, 1), new THREE.MeshStandardMaterial({color: 0x61faff}));
-	front_wall.onBeforeRender = function(renderer, scene, camera, geometry, material, group) {
-		if (camera.position.x > x - size/2 && camera.position.x < x + size/2 && camera.position.z > y - size/2 && camera.position.z < y + size/2) {
-			material.transparent = true;
-			material.opacity = 0.0;
-		} else {
-			material.transparent = false;
-			material.opacity = 1;
-		}
-	}
+
 	back_wall.translateX(x);
 	back_wall.translateZ(y - size/2);
 	back_wall.translateY(size/2);
@@ -68,15 +56,6 @@ function makeRoom(center, art_url) {
 	room.add(back_wall);
 
 	const left_wall = new THREE.Mesh(new THREE.BoxGeometry(1, size, wall_size), new THREE.MeshStandardMaterial({color: 0x61faff}));
-	front_wall.onBeforeRender = function(renderer, scene, camera, geometry, material, group) {
-		if (camera.position.x > x - size/2 && camera.position.x < x + size/2 && camera.position.z > y - size/2 && camera.position.z < y + size/2) {
-			material.transparent = true;
-			material.opacity = 0.0;
-		} else {
-			material.transparent = false;
-			material.opacity = 1;
-		}
-	}
 	left_wall.translateX(x - size/2);
 	left_wall.translateZ(y);
 	left_wall.translateY(size/2);
@@ -85,15 +64,6 @@ function makeRoom(center, art_url) {
 	room.add(left_wall);
 
 	const right_wall = new THREE.Mesh(new THREE.BoxGeometry(1, size, wall_size), new THREE.MeshStandardMaterial({color: 0x61faff}));
-	front_wall.onBeforeRender = function(renderer, scene, camera, geometry, material, group) {
-		if (camera.position.x > x - size/2 && camera.position.x < x + size/2 && camera.position.z > y - size/2 && camera.position.z < y + size/2) {
-			material.transparent = true;
-			material.opacity = 0.0;
-		} else {
-			material.transparent = false;
-			material.opacity = 1;
-		}
-	}
 	right_wall.translateX(x + size/2);
 	right_wall.translateZ(y);
 	right_wall.translateY(size/2);
@@ -107,7 +77,6 @@ function makeRoom(center, art_url) {
 	floor.translateY(.5);
 	room.add(floor);
 	floor.isSideWall = false;
-
 	return room;
 }
 
@@ -127,22 +96,58 @@ function resizeCanvasToDisplaySize() {
 	}
 }
 
+class Room {
+	constructor(x, y, url, song_name = "", artist_name = "", song_id = "", timestamp = 0, current_room = false) {
+		this.id = uuidv4();
+		this.x = x;
+		this.y = y;
+		this.url = url;
+		this.scene = scene;
+		this.room_center = new THREE.Vector3(x, 0, y);
+		this.room = makeRoom(this.room_center, url);
+		this.song_name = song_name;
+		this.artist_name = artist_name;
+		this.song_id = song_id;
+		this.timestamp = timestamp; 
+		this.current_room = current_room;
+	}
+
+	getRecommendations() {
+		return this.recommendations;
+	}
+}
+
 class RoomLoader{
 	constructor() {
-		this.rooms = {};
-		this.room_data = {};
-		this.current_room_center = new THREE.Vector3(0, 0, 0);
-		this.prev_room_center = new THREE.Vector3(0, 0, 0);		
+		this.center_to_room_id = {};
+		this.room = {};
+		this.prev_room;
+		this.current_room;
+		this.load_first_room().then(
+			(room) => {
+				this.current_room = room;
+				this.room[room.id] = room;
+				this.center_to_room_id[room.room_center] = room.id;
+				let current_room_center = room.room_center;
+				this.center_to_room_id[current_room_center.toArray().toString()] = room.id;
+				scene.add(room.room)
+			}
+		)
 	}
 
-	addRoom(room) {
-		let x_index = this.current_room_center.x.toString();
-		let z_index = this.current_room_center.z.toString();
-		if (this.rooms[x_index] == undefined) {this.rooms[x_index] = {};}
-		this.rooms[x_index][z_index] = {current_room: true, room: room};
-		scene.add(room);
+	async load_first_room() {
+		let songs = await window.spotifyApi.getFavoriteSongs(20);
+		let random_song = songs.items[Math.floor(Math.random() * 20)].track; 
+		let song_id = random_song.id;
+		let song_name = random_song.name;
+		let artist_name = random_song.artists[0].name;
+		let album_art_url = random_song.album.images[0].url;
+
+		let new_room = new Room(0, 0, album_art_url, song_name, artist_name, song_id, 0, true);
+		return new_room;
 	}
 
+	
 	getAdjacentRoomCenters() {
 		let adjacent_room_centers = [];
 		for (let x = -1; x <= 1; x++) {
@@ -156,89 +161,57 @@ class RoomLoader{
 		return adjacent_room_centers;
 	}
 
-	init_data(room_center) {
-		let x_index = room_center.x.toString();
-		let z_index = room_center.z.toString();
-		if (this.room_data[x_index] == undefined) {
-			this.room_data[x_index] = {};
-		}
-		if (this.room_data[x_index][z_index] == undefined) {
-			this.room_data[x_index][z_index] = {};
-		}
-	}
-
-	savePlaybackState(room_center, song_id, song_name, artist_name, timestamp, album_art_url) {
-		let x_index = room_center.x.toString();
-		let z_index = room_center.z.toString();
-		if (this.room_data[x_index] == undefined || this.room_data[x_index][z_index] == undefined) {
-			this.init_data(room_center);
-		}
-		this.room_data[x_index][z_index].song_id = song_id;
-		this.room_data[x_index][z_index].song_name = song_name;
-		this.room_data[x_index][z_index].artist_name = artist_name;
-		this.room_data[x_index][z_index].timestamp = timestamp;
-		this.room_data[x_index][z_index].album_art_url = album_art_url;
-	}
-	
-	async handleRoomExit(room_center) {
-		let x_index = room_center.x.toString();
-		let z_index = room_center.z.toString();
-		if (this.room_data[x_index] == undefined || this.room_data[x_index][z_index] == undefined) {
-			this.init_data(room_center);
-			return;
-		}
-		let song_info = await getPlaybackState();
-		console.log(song_info);
-		let timestamp = song_info.position;
-		let song_id = song_info.track_window.current_track.id;
-		let song_name = song_info.track_window.current_track.name;
-		let artist_name = song_info.track_window.current_track.artists[0].name;
-		let album_art_url = song_info.track_window.current_track.album.images[0].url;
-		this.savePlaybackState(this.prev_room_center, song_id, song_name, artist_name, timestamp, album_art_url);
-	}
-
-	async handleRoomEnter(prev_room_center, room_center) {
-		let x_index = room_center.x.toString();
-		let z_index = room_center.z.toString();
-		
-		// this.rooms[x_index][z_index].is_current = true;
-		if (this.room_data[x_index] == undefined || this.room_data[x_index][z_index] == undefined) {
-			this.init_data(room_center);
-			let recommendations = await window.spotifyApi.getFavoriteSongs(1)
-			let song_id = recommendations.items[0].track.id;
-			let next_recommendation = await window.spotifyApi.getRecommendationsFromSong(song_id, 1);
-			song_id = next_recommendation.tracks[0].id;
-			let song_name = next_recommendation.tracks[0].name;
-			let artist_name = next_recommendation.tracks[0].artists[0].name;
-			let album_art_url = next_recommendation.tracks[0].album.images[0].url;
-			await window.spotifyApi.playSong(song_id, 0);
-			console.log("albumn art url: " + album_art_url)
-			let new_room = makeRoom(room_center, album_art_url);
-			this.addRoom(new_room);
-			this.updateDisplay(song_name, artist_name, album_art_url)
-			
-			
-		} else {
-			let song_id = this.room_data[x_index][z_index].song_id;
-			let song_name = this.room_data[x_index][z_index].song_name;
-			let artist_name = this.room_data[x_index][z_index].artist_name;
-			let album_art_url = this.room_data[x_index][z_index].album_art_url;
-			console.log("albumn art url: " + album_art_url)
-			this.updateDisplay(song_name, artist_name, album_art_url)
-			let timestamp = this.room_data[x_index][z_index].timestamp;
-			await window.spotifyApi.playSong(song_id, timestamp);
-		}
+	savePlaybackState(room, song_id, song_name, artist_name, timestamp, album_art_url) {
+		room.song_id = song_id;
+		room.song_name = song_name;
+		room.artist_name = artist_name;
+		room.timestamp = timestamp;
+		room.url = album_art_url;
 	}
 
 	updateDisplay(song_name, artist_name, album_art_url) {
 		document.getElementById("player-track-name").innerHTML = song_name;
 		document.getElementById("player-track-artist").innerHTML = artist_name;
-		let current_room = this.rooms[this.current_room_center.x.toString()][this.current_room_center.z.toString()].room;
-		let room_children = current_room.children.filter(child => child?.isMesh);	
-		for (let wall of room_children) { 
-			wall.material.map = new THREE.TextureLoader().load(album_art_url);
-			wall.material.side = THREE.DoubleSide;
-			wall.material.needsUpdate = true;
+		document.getElementById("player-track-image").setAttribute("src", album_art_url);
+	}
+	
+	async handleRoomExit() {
+		let song_info = await getPlaybackState();
+		let timestamp = song_info.position;
+		let current_room = this.room[this.current_room.id];
+		current_room.timestamp = timestamp;
+		this.prev_room = current_room;
+	}
+
+	getRoomOrNull(room_center) {
+		if (this.center_to_room_id[room_center.toArray().toString()]) {
+			return this.room[this.center_to_room_id[room_center.toArray().toString()]];
+		}
+		return null;
+	}
+
+	async handleRoomEnter() {
+		let current_room = this.getRoomOrNull(this.current_room_center);
+		if (current_room != null) {
+			this.current_room = current_room;
+			let timestamp = current_room.timestamp;
+			await window.spotifyApi.playSong(current_room.song_id, timestamp);
+			this.updateDisplay(current_room.song_name, current_room.artist_name, current_room.url);
+		} else {
+			let prev_song_id = this.room[this.prev_room.id].song_id
+			let new_song = await window.spotifyApi.getRecommendationsFromSong(prev_song_id, 1);
+			let song_id = new_song.tracks[0].id;
+			let song_name = new_song.tracks[0].name;
+			let artist_name = new_song.tracks[0].artists[0].name;
+			let album_art_url = new_song.tracks[0].album.images[0].url;
+			let timestamp = 0;
+			let new_room = new Room(this.current_room_center.x, this.current_room_center.z, album_art_url, song_name, artist_name, song_id, timestamp);
+			this.room[new_room.id] = new_room;
+			this.center_to_room_id[this.current_room_center.toArray().toString()] = new_room.id
+			this.current_room = new_room;
+			this.updateDisplay(song_name, artist_name, album_art_url)
+			scene.add(new_room.room)
+			await window.spotifyApi.playSong(this.current_room.song_id, timestamp);
 		}
 	}
 
@@ -246,9 +219,18 @@ class RoomLoader{
 		if (event?.room_change) {
 			this.prev_room_center = event.room_change.prev_room;
 			this.current_room_center = event.room_change.next_room;
-			this.handleRoomExit(this.prev_room_center);
-			this.handleRoomEnter(this.prev_room_center, this.current_room_center);
+			this.prev_room = this.currrent_room;
+			this.handleRoomExit(this.prev_room_center).then(() => {
+				console.log("exited room")
+				this.handleRoomEnter(this.current_room_center).then(() => {
+					console.log("entered room")
+				});
+			});
 		}
+	}
+
+	getRoom() {
+		return this.room[this.center_to_room_id[this.current_room_center.toArray().toString()]];
 	}
 }
 

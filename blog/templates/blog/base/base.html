@@ -9,19 +9,16 @@
 		<meta http-equiv="X-UA-Compatible" content="ie=edge">
 		{% tailwind_css %}
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> 
-        <script   src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"   integrity="sha256-eTyxS0rkjpLEo16uXTS0uVCS4815lc40K2iVpWDvdSY="   crossorigin="anonymous"></script>
-        <script  src="{% static 'blog/app.js' %}"></script>
+        <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"   integrity="sha256-eTyxS0rkjpLEo16uXTS0uVCS4815lc40K2iVpWDvdSY="   crossorigin="anonymous"></script>
+        <script src="{% static 'blog/app.js' %}"></script>
+        <script src="{% static 'blog/three.js' %}"  ></script>
+        <script type="module"  src="{% static 'blog/orbitControls.js' %}"></script>
+        <script type="module" src="{% static 'blog/threeCode.js' %}"></script>
+        <script src="{% static 'blog/spotifyApi.js' %}"></script>
 	</head>
     
 	<body class="fixed flex flex-col w-full h-full justify-right align-middle">
         <script src="https://sdk.scdn.co/spotify-player.js"></script>
-        <script>
-            token = '{{user.spotify_access_token}}';
-            refresh_token = '{{user.spotify_refresh_token}}';
-            failure_url = "{% url 'blog:Spotify' %}";
-            waitForSpotifyWebPlaybackSDKToLoad(token, failure_url);
-            console.log("connecting...") 
-          </script>
         <div id="header" class="sticky top-0 h-auto">
             {% include "blog/base/header.html"%}
         </div>
