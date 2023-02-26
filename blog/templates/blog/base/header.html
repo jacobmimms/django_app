@@ -15,7 +15,29 @@
         <span>Home</span>
       </a>
     {% endif %}
-    
+    {% if user.spotify_access_token %}
+      {% if '/spotify' in request.path%}
+        <a class="flex flex-col justify-end p-2 bg-slate-400 active:bg-slate-400 hover:cursor-pointer">
+          <span>Spotify</span>
+        </a>
+      {% else %}
+        <a href="{% url 'blog:Spotify' %}" class="flex flex-col justify-end p-2 hover:bg-slate-300 active:bg-slate-300">
+          <span>Spotify</span>
+        </a>
+      {% endif %}
+    {% else %}
+      <div class="flex flex-col items-center justify-center h-screen pb-20">
+        <div class="flex flex-col items-center justify-center mt-4">
+          <a href="{% url 'blog:Spotify' %}" class="bg-[#1DB954] text-white rounded-full px-4 py-2">Connect</a>
+        </div>
+      </div>
+    {% endif %}
+    {% if user.spotify_access_token %}
+        <a href="{% url 'blog:spotify_logout' %}" class="flex flex-col justify-end p-2 hover:bg-slate-300 active:bg-slate-300">
+          <span>Spotify Logout</span>
+        </a>
+
+    {% endif %}
     {% if user.is_authenticated %}
       {% if '/profile' in request.path%}
         <a  class="flex flex-col justify-end h-full p-2 hover:cursor-pointer bg-slate-400">

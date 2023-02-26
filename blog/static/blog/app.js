@@ -50,7 +50,6 @@ let reply = function (post_id, parent_id, csrf_token) {
     $(`#reply-text-area${parent_id}`).val("")
 }
 
-
 let ajax_comment = function (post_id, request_parameters) {
     var endpoint = `${window.location.origin}/${post_id}/post/comment`
     $.post(endpoint, request_parameters)
@@ -65,6 +64,7 @@ let ajax_comment = function (post_id, request_parameters) {
             $("#comment-count").text(`Comments (${newCount})`)
         })
 }
+
 let comment = function (parent_id, csrf_token) {
     if ($(`#comment-text-area`).val().trim() == "" || $(`#comment-text-area`).val().trim() == null) {
         $("#comment-text-area").val("")
@@ -79,7 +79,6 @@ let comment = function (parent_id, csrf_token) {
     })
     $("#comment-text-area").val("")
 }
-
 
 let ajax_vote = function (endpoint, request_parameters) {
     const arrows = {active:{up:'▲', down:'▼'}, inactive:{up:'△', down:'▽'}}
@@ -107,7 +106,6 @@ let ajax_vote = function (endpoint, request_parameters) {
         })
 }
 
-
 let vote = (vote_type, obj_type, id, csrf_token) => {
     ajax_vote(`${window.location.origin}/vote`, {
         vote_type: vote_type,
@@ -117,23 +115,19 @@ let vote = (vote_type, obj_type, id, csrf_token) => {
     })
 }
 
-
 let sort = () => {
     $("#comment-section").get(0).scrollIntoView()
 }
 
-
 $("body").on('DOMSubtreeModified', "#comment-section", function() {
     $("#comment-count").html(`Comments (${$("#comment-section").children().length})`);
 });
-
 
 $('#main-content').scroll(function() { 
     if($('#main-content').scrollTop() === 0) {
         $("#header").show(200);
     }
 });
-
 
 
 var lastScrollTop = 0;
@@ -155,57 +149,54 @@ $('#main-content').scroll(function() {
 });
 
 
-async function waitForSpotifyWebPlaybackSDKToLoad (access_token, failure_url) {
-    // get the spotify access token from the hidden input
+async function waitForSpotifyWebPlaybackSDKToLoad (access_token, failure_url, container_id) {
     return new Promise(resolve => {
-      if (window.Spotify) {
-        resolve(window.Spotify);
-      } else {
-        window.onSpotifyWebPlaybackSDKReady = () => {
-            window.spotifyApi = new SpotifyApi(access_token, null, failure_url)
-            console.log("Spotify SDK starting", access_token)
-            const token = access_token;
-            const player = new Spotify.Player({
-                name: 'Bros Code',
-                getOAuthToken: cb => { cb(token); },
-                volume: 0.5
-            });
-            // Ready
-            player.addListener('ready', ({ device_id }) => {
-                console.log('Ready with Device ID', device_id);
-                window.spotifyApi.setDeviceId(device_id)
-                window.spotifyApi.setPlayer(player)
-            });
-        
-            // Not Ready
-            player.addListener('not_ready', ({ device_id }) => {
-                console.log('Device ID has gone offline', device_id);
-            });
-        
-            player.addListener('initialization_error', ({ message }) => {
-                console.error(message);
-            });
-        
-            player.addListener('authentication_error', ({ message }) => {
-                console.error(message);
-                console.log("Redirecting to failure url")
-                window.location.replace(failure_url)
-            });
-        
-            player.addListener('account_error', ({ message }) => {
-                console.error(message);
-            });
-
-            // make the player the current active player by transferring playback using the device id
-         
-
-
-            player.connect();
-            window.player = player;
+        if (window.Spotify) {
+            resolve(window.Spotify);
+        } else {
+            window.onSpotifyWebPlaybackSDKReady = () => {
+                window.spotifyApi = new SpotifyApi(access_token, null, failure_url)
+                console.log("Spotify SDK starting", access_token)
+                const token = access_token;
+                const player = new Spotify.Player({
+                    name: 'Bros Code',
+                    getOAuthToken: cb => { cb(token); },
+                    volume: 0.5
+                });
+                // Ready
+                player.addListener('ready', ({ device_id }) => {
+                    console.log('Ready with Device ID', device_id);
+                    window.spotifyApi.setDeviceId(device_id)
+                    window.spotifyApi.setPlayer(player)
+                });
+            
+                // Not Ready
+                player.addListener('not_ready', ({ device_id }) => {
+                    console.log('Device ID has gone offline', device_id);
+                });
+            
+                player.addListener('initialization_error', ({ message }) => {
+                    console.error(message);
+                });
+            
+                player.addListener('authentication_error', ({ message }) => {
+                    console.error(message);
+                    console.log("Redirecting to failure url")
+                    window.location.replace(failure_url)
+                });
+            
+                player.addListener('account_error', ({ message }) => {
+                    console.error(message);
+                });
+                player.connect();
+                window.player = player;
+                resolve(window.Spotify);
+                console.log("showing container", container_id)
+                $(`#${container_id}`).show()
+            }
         }
-      }
     });
-  };
+};
   
 
 async function getPlaybackState() {   
@@ -279,9 +270,11 @@ class SpotifyApi {
         this.refresh_token = refresh_token
         this.api_url = 'https://api.spotify.com/v1/'
     }
+
     setDeviceId(device_id) {
         this.device_id = device_id
     }
+
     setPlayer(player) {
         this.player = player
         this.transferPlayback(this.device_id, true)
@@ -291,6 +284,7 @@ class SpotifyApi {
             }
         )
     }
+
     async playSong(song_id, timestamp) {
         return new Promise(resolve => {
             console.log("playing sonog", song_id, "at timestamp", timestamp)
@@ -315,6 +309,7 @@ class SpotifyApi {
             })
         })
     }
+
     transferPlayback(device_id) {
         return new Promise(resolve => {
             $.ajax({
@@ -354,6 +349,7 @@ class SpotifyApi {
             })
         })
     }
+
     async getCurrentlyPlaying() {
         return new Promise(resolve => {
             $.ajax({
@@ -389,6 +385,7 @@ class SpotifyApi {
             })
         })
     }
+
     async getFavoriteSongs(limit) {
         return new Promise(resolve => {
             $.ajax({
@@ -406,6 +403,7 @@ class SpotifyApi {
             })
         })
     }
+
     async getRecommendationsFromSong(seed_tracks, limit, max_tempo, min_tempo, max_danceability, min_danceability, max_energy, min_energy, max_valence, min_valence) {
         return new Promise(resolve => {
             $.ajax({
@@ -423,6 +421,7 @@ class SpotifyApi {
             })
         })
     }
+    
     async getTrack(track_id) {
         return new Promise(resolve => {
             $.ajax({

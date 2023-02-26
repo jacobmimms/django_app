@@ -5,6 +5,7 @@ app_name = "blog"
 urlpatterns = [
     path('', views.index, name='index'),
     path('spotify/', views.Spotify.as_view(), name='Spotify'),
+    path('spotify/logout/', views.SpotifyLogout.as_view(), name='spotify_logout'),
     path('spotify/login/', views.SpotifyLogin.as_view(), name='spotify_login'),
     path('spotify/redirect/', views.SpotifyCallback.as_view(), name='spotify_redirect'),
     path('spotify/<str:artist_name>/<str:song_name>/<str:song_id>', views.SpotifySongView.as_view(), name='spotify_song_view'),

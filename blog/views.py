@@ -14,6 +14,8 @@ from .forms import PostForm, ProfilePictureForm, SignUpForm, token_generator, us
 from .models import  Post, Comment, User
 import requests
 import environ
+import time 
+from datetime import datetime
 env = environ.Env()
 environ.Env.read_env() 
 
@@ -33,8 +35,8 @@ def index(request):
     return render(request, 'blog/index.html', context)
 
 
-def three(request):
-    return render(request, 'blog/3d/3d.html')
+def three(req):
+    return render(req, 'blog/3d/3d.html', {"token": req.user.spotify_access_token})
 
 
 def three_profile(request, pk):
@@ -98,14 +100,19 @@ class Spotify(View):
         if not req.user.is_authenticated:
             return HttpResponseRedirect(reverse('blog:login'))
         if not req.user.spotify_access_token:
-            print("no token")
-            return HttpResponseRedirect(reverse('blog:spotify_login'))
+            return HttpResponseRedirect(reverse('blog:spotify_login'), {'referring_url':req.META.get('HTTP_REFERER')})
+        if req.user.spotify_access_token == '1':
+            return render(req, 'blog/spotify.html', {'token': req.user.spotify_access_token})
+
+        expiration_as_float = req.user.spotify_token_expires_at.timestamp()
+        if expiration_as_float < time.time():
+            return HttpResponseRedirect(reverse('blog:spotify_login'), {'referring_url':req.META.get('HTTP_REFERER')})    
         context = {}
         top_artists = 'me/top/artists?time_range=long_term&limit=200'
         top_tracks = 'me/top/tracks?time_range=long_term&limit=200'
         top = requests.get(self.api_url + top_artists, headers={'Authorization': 'Bearer ' + req.user.spotify_access_token})
         if top.status_code == 401:
-            return HttpResponseRedirect(reverse('blog:spotify_login'))
+            return HttpResponseRedirect(reverse('blog:spotify_login'),  {'referring_url':req.META.get('HTTP_REFERER')})
         top_tracks = requests.get(self.api_url + top_tracks, headers={'Authorization': 'Bearer ' + req.user.spotify_access_token})
         top = top.json()
         top_artists = []
@@ -129,27 +136,36 @@ class Spotify(View):
         context['token'] = req.user.spotify_access_token
         return render(req, 'blog/spotify.html', context)
 
-            
-class SpotifyLogin(RedirectView):
-    scope = 'user-read-private user-read-email user-read-playback-state user-modify-playback-state user-read-currently-playing user-read-recently-played user-top-read playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public user-read-playback-position user-top-read user-read-recently-played user-library-modify user-library-read app-remote-control streaming'
-    url = 'https://accounts.spotify.com/authorize?client_id={}&response_type=code&redirect_uri={}&scope={}'.format(
-        env('SPOTIFY_CLIENT_ID'),
-        env('SPOTIFY_REDIRECT_URI'),
-        scope
-    )
 
+class SpotifyLogout(View):
     def get(self, req):
         if not req.user.is_authenticated:
             return HttpResponseRedirect(reverse('blog:login'))
-        return super().get(req)
+        req.user.spotify_access_token = 1
+        req.user.spotify_refresh_token = 1
+        req.user.spotify_token_expires_at = datetime.now()
+        req.user.save()
+        # get url of current page
+        current_url = req.META.get('HTTP_REFERER')
+        return HttpResponseRedirect(current_url)
 
+class SpotifyLogin(RedirectView):
+ 
+    def get_redirect_url(self, *args, **kwargs):
+        scope = 'user-read-private user-read-email user-read-playback-state user-modify-playback-state user-read-currently-playing user-read-recently-played user-top-read playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public user-read-playback-position user-top-read user-read-recently-played user-library-modify user-library-read app-remote-control streaming'
+        url = 'https://accounts.spotify.com/authorize?client_id={}&response_type=code&redirect_uri={}&scope={}'.format(
+            env('SPOTIFY_CLIENT_ID'),
+            env('SPOTIFY_REDIRECT_URI'),
+            scope)
+        return url
+  
 
 class SpotifyCallback(RedirectView):
-    url = reverse_lazy('blog:Spotify')
+    def get_redirect_url(self, *args, **kwargs):
+        url = reverse_lazy('blog:Spotify')
+        return url
+
     def get(self, req):
-        # save access token to user
-        if not req.user.is_authenticated:
-            return HttpResponseRedirect(reverse('blog:login'))
         code = req.GET.get('code')
         if code:
             data = {
@@ -157,21 +173,23 @@ class SpotifyCallback(RedirectView):
                 'code': code,
                 'redirect_uri': env('SPOTIFY_REDIRECT_URI'),
                 'client_id': env('SPOTIFY_CLIENT_ID'),
-                'client_secret': env('SPOTIFY_CLIENT_SECRET')
+                'client_secret': env('SPOTIFY_CLIENT_SECRET'),
+                'scope': 'user-read-private user-read-email user-read-playback-state user-modify-playback-state user-read-currently-playing user-read-recently-played user-top-read playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public user-read-playback-position user-top-read user-read-recently-played user-library-modify user-library-read app-remote-control streaming'
             }
             r = requests.post('https://accounts.spotify.com/api/token', data=data)
             if r.status_code == 200:
                 req.user.spotify_access_token = r.json().get('access_token')
                 req.user.spotify_refresh_token = r.json().get('refresh_token')
+                expiration_time = (r.json().get('expires_in') + time.time())
+                # make expriaton time a datetime
+                expiration_time = datetime.fromtimestamp(expiration_time)
+                req.user.spotify_token_expires_at = expiration_time
                 req.user.save()
                 return super().get(req)
 
 
 class SpotifySongView(View):
     def get(self, *args, **kwargs):
-        # this is the view that will be called when the user clicks on a song
-        # and it will show all of the song info
-        # and the user will be able to add it to their playlist
         song_id = kwargs.get('song_id')
         context = {}
         track_info = f'/tracks/{song_id}'
@@ -192,7 +210,6 @@ class SpotifySongView(View):
         context['song_info'] = response_json
         return render(self.request, 'blog/song.html', context)
 
-
 class SignUpView(CreateView):
     form_class = SignUpForm 
     template_name = 'blog/auth/signup.html'
@@ -204,7 +221,6 @@ class SignUpView(CreateView):
         user.save()
         form.send_activation_email(self.request, user)
         return to_return
-
 
 class ActivateView(RedirectView):
     url = reverse_lazy('blog:success')
@@ -228,7 +244,6 @@ class CheckEmailView(TemplateView):
 class SuccessView(TemplateView):
     template_name = 'blog/auth/success.html'
 
-
 def new_post(request):
     if not request.user.is_authenticated:
         return HttpResponseRedirect(reverse('blog:login'))
@@ -242,7 +257,6 @@ def new_post(request):
     else:
         form = PostForm()
     return render(request, 'blog/new_post.html', {'form': form})
-
 
 def friends(request):
     if not request.user.is_authenticated:
@@ -261,12 +275,10 @@ def friends(request):
     friends = request.user.friends.all()
     return render(request, 'blog/friends.html', {'friends': friends, 'user': request.user})
 
-
 def post(request, pk):
     post = get_object_or_404(Post, pk=pk)
     comments = Comment.objects.filter(post=post).filter(parent_comment=None).order_by('-created_at')
     return render(request, 'blog/post.html', {'post': post, 'comments': comments, 'user': request.user})
-
 
 def comment(request, pk):
     if not request.user.is_authenticated:

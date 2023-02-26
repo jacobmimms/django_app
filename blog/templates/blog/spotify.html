@@ -3,29 +3,32 @@
 {% load crispy_forms_tags %}
 {% block content %}
 <div>
-    <h1> Spotify Page </h1>
-    <h1>Spotify Web Playback SDK Quick Start</h1>
-    <button id="togglePlay">Toggle Play</button>
-    <button id="current-state" onclick="getPlaybackState()">
-        <p>Current State</p>
-        <div id="current-song"></div>
-        <div id="next-song"></div>
-    </div>
-    <script>
-        access_token = "{{ user.spotify_access_token }}"
-        connectSpotify(access_token)
-    </script>
-    <div class = "flex flex-col justify-between items-center">
-        {% for track_info in top_tracks %}
-            <a class="" href="{% url 'blog:spotify_song_view' artist_name=track_info.url_artist song_name=track_info.url_name song_id=track_info.song_id %}">
-            <div id='song-card' class='w-[100%] h-full flex justify-left content-center bg-slate-400 text-slate-800 p-2 m-2 rounded-lg'> 
-                <img src={{track_info.album_art}} alt="track image" class="w-[20%] h-[100%] rounded-l-lg ">
-                <div class='flex flex-col h-30 w-full content-around justify-center bg-slate-300 rounded-r-lg'>
-                    <span class='rounded-t-full  px-4 text-center text-sm overflow-auto'> {{track_info.name}} </span>
-                    <span class='rounded-b-full  px-4 text-center text-sm overflow-auto'> {{track_info.artist}} </span>
-                </div>
+    {% if token == '1'%}
+        <div class="flex flex-col items-center justify-center h-screen pb-20">
+            <div class="flex flex-col items-center justify-center top">
+                <div class="text-3xl font-bold">Connect to Spotify</div>
+                <div class="text-xl">To use this feature, you must connect to Spotify</div>
             </div>
-        {% endfor %}
-    </div>
+            <div class="flex flex-col items-center justify-center mt-4">
+                <a href="{% url 'blog:spotify_login' %}" class="bg-[#1DB954] text-white rounded-full px-4 py-2">Connect to Spotify</a>
+            </div>
+        </div>
+    {% else %}
+        <div class = "flex flex-col justify-between items-center">
+            {% for track_info in top_tracks %}
+                <a class="" href="{% url 'blog:spotify_song_view' artist_name=track_info.url_artist song_name=track_info.url_name song_id=track_info.song_id %}">
+                <div id='song-card' class='w-[100%] h-full flex justify-left content-center bg-slate-400 text-slate-800 p-2 m-2 rounded-lg'> 
+                    <img src={{track_info.album_art}} alt="track image" class="w-[20%] h-[100%] rounded-l-lg ">
+                    <div class='flex flex-col h-30 w-full content-around justify-center bg-slate-300 rounded-r-lg'>
+                        <span class='rounded-t-full  px-4 text-center text-sm overflow-auto'> {{track_info.name}} </span>
+                        <span class='rounded-b-full  px-4 text-center text-sm overflow-auto'> {{track_info.artist}} </span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    
+	</div>
+    {% endif %}
+  
 </div>
 {% endblock %}

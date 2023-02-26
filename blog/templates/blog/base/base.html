@@ -14,6 +14,14 @@
 	</head>
     
 	<body class="fixed flex flex-col w-full h-full justify-right align-middle">
+        <script src="https://sdk.scdn.co/spotify-player.js"></script>
+        <script>
+            token = '{{user.spotify_access_token}}';
+            refresh_token = '{{user.spotify_refresh_token}}';
+            failure_url = "{% url 'blog:Spotify' %}";
+            waitForSpotifyWebPlaybackSDKToLoad(token, failure_url);
+            console.log("connecting...") 
+          </script>
         <div id="header" class="sticky top-0 h-auto">
             {% include "blog/base/header.html"%}
         </div>
@@ -27,10 +35,10 @@
                 {% endblock %}       
             </div>
         </div>
-            
-        <div id="footer" class="sticky bottom-0 w-full">
+{% comment %}             
+        <div id="footer" class=" bottom-0 w-full">
             {% include "blog/base/footer.html" %}
-        </div>
+        </div> {% endcomment %}
 
         <div id="login-warning" class="hidden absolute z-10 h-[25%] w-[40%] left-[30%] top-[40%] bg-red-200 border-2 border-red-600 rounded-2xl"  onclick="$(this).hide();">
             {% include "blog/auth/login_warning.html" %}

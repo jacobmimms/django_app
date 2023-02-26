@@ -9,8 +9,9 @@ class User(AbstractUser):
     friends = models.ManyToManyField('self', blank=True)
     profile_picture = models.ImageField(upload_to='images/', default='images/default.jpg', blank=True, null=True)
     spotify_id = models.CharField(max_length=100, blank=True, null=True)
-    spotify_access_token = models.CharField(max_length=100, blank=True, null=True)
-    spotify_refresh_token = models.CharField(max_length=100, blank=True, null=True)
+    spotify_access_token = models.CharField(max_length=500, default='1')
+    spotify_refresh_token = models.CharField(max_length=500, default='1')
+    spotify_token_expires_at = models.DateTimeField(default=timezone.now)
 
     def email_user(self, subject, message, from_email=None, **kwargs):
         """Send an email to this user."""
